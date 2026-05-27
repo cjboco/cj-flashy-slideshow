@@ -46,6 +46,32 @@ function computeClipInset(
 	return `inset(${insetTop}px ${insetRight}px ${insetBottom}px ${insetLeft}px)`;
 }
 
+// Returns keyframe-compatible properties for either clip-path or mask
+function getRegionProps(
+	top: number, left: number, bW: number, bH: number,
+	containerW: number, containerH: number,
+	rounded: boolean, feathered: boolean,
+): Record<string, string> {
+	if (feathered) {
+		const pos = `${left}px ${top}px`;
+		const size = `${bW}px ${bH}px`;
+		return { maskPosition: pos, maskSize: size, webkitMaskPosition: pos, webkitMaskSize: size };
+	}
+	return { clipPath: computeClipInset(top, left, bW, bH, containerW, containerH, rounded) };
+}
+
+// Apply clip or mask properties to an element's inline style
+function applyRegionStyle(el: HTMLDivElement, props: Record<string, string>) {
+	if ("clipPath" in props) {
+		el.style.clipPath = props.clipPath;
+	} else {
+		el.style.setProperty("mask-position", props.maskPosition);
+		el.style.setProperty("mask-size", props.maskSize);
+		el.style.setProperty("-webkit-mask-position", props.maskPosition);
+		el.style.setProperty("-webkit-mask-size", props.maskSize);
+	}
+}
+
 export function FlashySlideshow({
 	children,
 	width,
@@ -62,6 +88,7 @@ export function FlashySlideshow({
 	rotation,
 	scale,
 	blur,
+	feather,
 	className,
 	onSlideChange,
 }: FlashySlideshowProps) {
@@ -86,17 +113,45 @@ export function FlashySlideshow({
 	const opts = useMemo(() => {
 		const presetOverrides = preset ? applyPreset(preset, width, height) : {};
 		return resolveOptions(
-			{ preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, sloppy, rotation, scale, blur },
+			{ preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, sloppy, rotation, scale, blur, feather },
 			width,
 			height,
 			presetOverrides,
 		);
-	}, [preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, sloppy, rotation, scale, blur, width, height]);
+	}, [preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, sloppy, rotation, scale, blur, feather, width, height]);
 
 	const blockW = Math.ceil(width / opts.xBlocks);
 	const blockH = Math.ceil(height / opts.yBlocks);
 	const totalBlocks = opts.xBlocks * opts.yBlocks;
 	const rounded = opts.style === "rounded";
+	const feathered = opts.feather > 0;
+
+	// Static mask gradient style (only when feathered)
+	const maskGradientStyle = useMemo((): React.CSSProperties => {
+		if (!feathered) return {};
+		const f = opts.feather;
+		if (rounded) {
+			const img = `radial-gradient(closest-side, black ${Math.max(0, 100 - f * 2)}%, transparent 100%)`;
+			return {
+				maskImage: img,
+				maskRepeat: "no-repeat",
+				WebkitMaskImage: img,
+				WebkitMaskRepeat: "no-repeat",
+			} as React.CSSProperties;
+		}
+		const img = [
+			`linear-gradient(to right, transparent 0%, black ${f}%, black ${100 - f}%, transparent 100%)`,
+			`linear-gradient(to bottom, transparent 0%, black ${f}%, black ${100 - f}%, transparent 100%)`,
+		].join(", ");
+		return {
+			maskImage: img,
+			maskRepeat: "no-repeat",
+			maskComposite: "intersect",
+			WebkitMaskImage: img,
+			WebkitMaskRepeat: "no-repeat",
+			WebkitMaskComposite: "source-in",
+		} as React.CSSProperties;
+	}, [feathered, opts.feather, rounded]);
 
 	// Build block data (memoized for stable reference)
 	const blocks = useMemo(() => {
@@ -160,17 +215,11 @@ export function FlashySlideshow({
 				const el = blockEls[i];
 				if (!el) continue;
 
-				// Position clip at the start location (off-screen or edge)
 				const scaledSize = opts.minBlockSize * opts.scale;
-				el.style.clipPath = computeClipInset(
-					b.startTop,
-					b.startLeft,
-					scaledSize,
-					scaledSize,
-					width,
-					height,
-					rounded,
-				);
+				applyRegionStyle(el, getRegionProps(
+					b.startTop, b.startLeft, scaledSize, scaledSize,
+					width, height, rounded, feathered,
+				));
 				el.style.opacity = String(b.opacity);
 				el.style.filter = opts.blur > 0 ? `blur(${opts.blur}px)` : "";
 			}
@@ -216,14 +265,9 @@ export function FlashySlideshow({
 					const phase1Duration = opts.sloppy ? randomRange(350, 1250) : 650;
 					const phase2Duration = opts.sloppy ? randomRange(250, 850) : 650;
 
-					const midClip = computeClipInset(
-						midCenterY,
-						midCenterX,
-						scaledSize,
-						scaledSize,
-						width,
-						height,
-						rounded,
+					const midProps = getRegionProps(
+						midCenterY, midCenterX, scaledSize, scaledSize,
+						width, height, rounded, feathered,
 					);
 
 					// Build phase 1 keyframes — spiral path when rotation > 0
@@ -237,12 +281,13 @@ export function FlashySlideshow({
 
 					if (blockRotation === 0) {
 						// Straight path
-						const startClip = computeClipInset(
-							b.startTop, b.startLeft, scaledSize, scaledSize, width, height, rounded,
+						const startProps = getRegionProps(
+							b.startTop, b.startLeft, scaledSize, scaledSize,
+							width, height, rounded, feathered,
 						);
 						phase1Keyframes.push(
-							{ clipPath: startClip, ...(blurVal && { filter: blurVal }) },
-							{ clipPath: midClip, ...(blurVal && { filter: blurVal }) },
+							{ ...startProps, ...(blurVal && { filter: blurVal }) },
+							{ ...midProps, ...(blurVal && { filter: blurVal }) },
 						);
 					} else {
 						// Spiral arc path from start to center
@@ -266,13 +311,13 @@ export function FlashySlideshow({
 							const clipX = cx - scaledSize / 2;
 							const clipY = cy - scaledSize / 2;
 							phase1Keyframes.push({
-								clipPath: computeClipInset(clipY, clipX, scaledSize, scaledSize, width, height, rounded),
+								...getRegionProps(clipY, clipX, scaledSize, scaledSize, width, height, rounded, feathered),
 								...(blurVal && { filter: blurVal }),
 							});
 						}
 					}
 
-					// Phase 1: move clip from start position to grid center
+					// Phase 1: move from start position to grid center
 					const phase1 = el.animate(
 						phase1Keyframes,
 						{ duration: phase1Duration, easing: "linear", fill: "forwards" },
@@ -281,30 +326,32 @@ export function FlashySlideshow({
 					phase1.onfinish = () => {
 						if (!state.mounted) return;
 
-						// Phase 2: expand clip from small at center to full cell
-						let expandedClip: string;
+						// Phase 2: expand from small at center to full cell
+						let expandedProps: Record<string, string>;
 						if (rounded) {
 							const cx = blockW * b.x + blockW / 2;
 							const cy = blockH * b.y + blockH / 2;
 							const bigR = Math.ceil(Math.hypot(blockW, blockH));
-							expandedClip = computeClipInset(
-								cy - bigR, cx - bigR, bigR * 2, bigR * 2, width, height, true,
+							expandedProps = getRegionProps(
+								cy - bigR, cx - bigR, bigR * 2, bigR * 2,
+								width, height, true, feathered,
 							);
 						} else {
-							expandedClip = computeClipInset(
-								b.endTop, b.endLeft, blockW * 2, blockH * 2, width, height, false,
+							expandedProps = getRegionProps(
+								b.endTop, b.endLeft, blockW * 2, blockH * 2,
+								width, height, false, feathered,
 							);
 						}
 
 						const phase2 = el.animate(
 							[
 								{
-									clipPath: midClip,
+									...midProps,
 									opacity: String(b.opacity),
 									...(blurVal && { filter: blurVal }),
 								},
 								{
-									clipPath: expandedClip,
+									...expandedProps,
 									opacity: "1",
 									...(blurVal && { filter: "blur(0px)" }),
 								},
@@ -315,7 +362,7 @@ export function FlashySlideshow({
 						phase2.onfinish = () => {
 							if (!state.mounted) return;
 
-							el.style.clipPath = expandedClip;
+							applyRegionStyle(el, expandedProps);
 							el.style.opacity = "1";
 							el.style.filter = "";
 							phase1.cancel();
@@ -367,6 +414,7 @@ export function FlashySlideshow({
 		blockW,
 		blockH,
 		rounded,
+		feathered,
 		getNextSlideIndex,
 	]);
 
@@ -415,6 +463,7 @@ export function FlashySlideshow({
 						overflow: "hidden",
 						pointerEvents: "none",
 						visibility: showBlocks ? "visible" : "hidden",
+						...maskGradientStyle,
 					}}
 				>
 					{slides[nextSlide]}

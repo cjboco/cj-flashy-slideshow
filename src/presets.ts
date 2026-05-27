@@ -103,6 +103,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 				sloppy: true,
 				blur: 8,
 				scale: 0.8,
+				feather: 20,
 				delay: 3000,
 			};
 		case "vortex":

@@ -41,6 +41,7 @@ export interface FlashySlideshowOptions {
 	rotation?: number;
 	scale?: number;
 	blur?: number;
+	feather?: number;
 }
 
 export interface FlashySlideshowProps extends FlashySlideshowOptions {
@@ -74,4 +75,5 @@ export interface ResolvedOptions {
 	rotation: number;
 	scale: number;
 	blur: number;
+	feather: number;
 }

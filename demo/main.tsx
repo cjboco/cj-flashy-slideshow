@@ -75,6 +75,8 @@ interface Settings {
 	scaleEnabled: boolean;
 	blur: number;
 	blurEnabled: boolean;
+	feather: number;
+	featherEnabled: boolean;
 }
 
 const PROP_DEFAULTS = {
@@ -84,6 +86,7 @@ const PROP_DEFAULTS = {
 	rotation: 180, rotationEnabled: false,
 	scale: 0.5, scaleEnabled: false,
 	blur: 4, blurEnabled: false,
+	feather: 15, featherEnabled: false,
 };
 
 function resolvePresetValues(preset: Preset): Omit<Settings, "usePreset" | "preset" | "slideType"> {
@@ -104,6 +107,8 @@ function resolvePresetValues(preset: Preset): Omit<Settings, "usePreset" | "pres
 		scaleEnabled: resolved.scale !== 1,
 		blur: resolved.blur !== 0 ? resolved.blur : 4,
 		blurEnabled: resolved.blur !== 0,
+		feather: resolved.feather !== 0 ? resolved.feather : 15,
+		featherEnabled: resolved.feather !== 0,
 	};
 }
 
@@ -124,6 +129,7 @@ function settingsToUrl(s: Settings): string {
 	if (s.rotationEnabled) p.set("rot", String(s.rotation));
 	if (s.scaleEnabled) p.set("sc", String(s.scale));
 	if (s.blurEnabled) p.set("bl", String(s.blur));
+	if (s.featherEnabled) p.set("fe", String(s.feather));
 	const qs = p.toString();
 	return qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
 }
@@ -158,6 +164,8 @@ function parseUrlSettings(): Settings {
 		scaleEnabled: p.has("sc"),
 		blur: p.has("bl") ? Number(p.get("bl")) : base.blur,
 		blurEnabled: p.has("bl"),
+		feather: p.has("fe") ? Number(p.get("fe")) : base.feather,
+		featherEnabled: p.has("fe"),
 	};
 }
 
@@ -316,6 +324,7 @@ function buildCodeExample(s: Settings): string {
 	if (s.rotationEnabled) lines.push(`  rotation={${s.rotation}}`);
 	if (s.scaleEnabled) lines.push(`  scale={${s.scale}}`);
 	if (s.blurEnabled) lines.push(`  blur={${s.blur}}`);
+	if (s.featherEnabled) lines.push(`  feather={${s.feather}}`);
 	return `<FlashySlideshow\n${lines.join("\n")}\n>\n  {/* slides */}\n</FlashySlideshow>`;
 }
 
@@ -346,7 +355,7 @@ function App() {
 		}
 	}, []);
 
-	const toggleOptional = useCallback((prop: "rotation" | "scale" | "blur", on: boolean) => {
+	const toggleOptional = useCallback((prop: "rotation" | "scale" | "blur" | "feather", on: boolean) => {
 		setSettings((prev) => {
 			const enabledKey = `${prop}Enabled` as keyof Settings;
 			return { ...prev, [enabledKey]: on, usePreset: false };
@@ -475,6 +484,7 @@ function App() {
 								rotation={settings.rotationEnabled ? settings.rotation : 0}
 								scale={settings.scaleEnabled ? settings.scale : 1}
 								blur={settings.blurEnabled ? settings.blur : 0}
+								feather={settings.featherEnabled ? settings.feather : 0}
 								onSlideChange={setSlideIndex}
 							>
 								{settings.slideType === "images" &&
@@ -574,6 +584,13 @@ function App() {
 							onToggle={(on) => toggleOptional("blur", on)}
 							onChange={(v) => update("blur", v)}
 							min={0} max={20} step={0.5} suffix="px"
+						/>
+						<OptionalRangeControl
+							label="feather" value={settings.feather}
+							enabled={settings.featherEnabled}
+							onToggle={(on) => toggleOptional("feather", on)}
+							onChange={(v) => update("feather", v)}
+							min={0} max={50} step={1} suffix="%"
 						/>
 					</div>
 				</div>

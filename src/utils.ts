@@ -125,6 +125,7 @@ export function resolveOptions(
 		rotation?: number;
 		scale?: number;
 		blur?: number;
+		feather?: number;
 	},
 	w: number,
 	h: number,
@@ -141,6 +142,7 @@ export function resolveOptions(
 	const rotation = presetOverrides.rotation ?? props.rotation ?? 0;
 	const scale = presetOverrides.scale ?? props.scale ?? 1;
 	const blur = presetOverrides.blur ?? props.blur ?? 0;
+	const feather = presetOverrides.feather ?? props.feather ?? 0;
 
 	xBlocks = typeof xBlocks !== "number" ? 3 : xBlocks < 1 ? 1 : xBlocks;
 	yBlocks = typeof yBlocks !== "number" ? 3 : yBlocks < 1 ? 1 : yBlocks;
@@ -164,5 +166,6 @@ export function resolveOptions(
 		rotation: typeof rotation !== "number" ? 0 : rotation,
 		scale: typeof scale !== "number" ? 1 : Math.max(0, Math.min(1, scale)),
 		blur: typeof blur !== "number" ? 0 : Math.max(0, blur),
+		feather: typeof feather !== "number" ? 0 : Math.max(0, Math.min(50, feather)),
 	};
 }
