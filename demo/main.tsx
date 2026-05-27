@@ -35,7 +35,7 @@ function App() {
 			<p>A React component that gives your slideshows some flash-like transitions.</p>
 
 			<h3>Bricks (Default) - Images</h3>
-			<div style={{ marginBottom: 30, border: "10px solid #000" }}>
+			<div style={{ display: "inline-block", marginBottom: 30, border: "10px solid #000" }}>
 				<FlashySlideshow width={W} height={H}>
 					{imageSlide("./images/image_a.jpg")}
 					{imageSlide("./images/image_b.jpg")}
@@ -44,7 +44,7 @@ function App() {
 			</div>
 
 			<h3>Cubism - HTML Content</h3>
-			<div style={{ marginBottom: 30, border: "10px solid #000" }}>
+			<div style={{ display: "inline-block", marginBottom: 30, border: "10px solid #000" }}>
 				<FlashySlideshow width={W} height={H} preset="cubism">
 					{htmlSlide("linear-gradient(135deg, #667eea 0%, #764ba2 100%)", "Slide One")}
 					{htmlSlide("linear-gradient(135deg, #f093fb 0%, #f5576c 100%)", "Slide Two")}
@@ -53,7 +53,7 @@ function App() {
 			</div>
 
 			<h3>Rain - Mixed Content</h3>
-			<div style={{ marginBottom: 30, border: "10px solid #000" }}>
+			<div style={{ display: "inline-block", marginBottom: 30, border: "10px solid #000" }}>
 				<FlashySlideshow width={W} height={H} preset="rain">
 					{imageSlide("./images/image_a.jpg")}
 					{htmlSlide("linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)", "HTML Slide")}
@@ -62,7 +62,7 @@ function App() {
 			</div>
 
 			<h3>Blinds</h3>
-			<div style={{ marginBottom: 30, border: "10px solid #000" }}>
+			<div style={{ display: "inline-block", marginBottom: 30, border: "10px solid #000" }}>
 				<FlashySlideshow width={W} height={H} preset="blinds">
 					{imageSlide("./images/image_a.jpg")}
 					{imageSlide("./images/image_b.jpg")}
@@ -71,7 +71,7 @@ function App() {
 			</div>
 
 			<h3>Blinds2</h3>
-			<div style={{ marginBottom: 30, border: "10px solid #000" }}>
+			<div style={{ display: "inline-block", marginBottom: 30, border: "10px solid #000" }}>
 				<FlashySlideshow width={W} height={H} preset="blinds2">
 					{imageSlide("./images/image_a.jpg")}
 					{imageSlide("./images/image_b.jpg")}
@@ -80,7 +80,7 @@ function App() {
 			</div>
 
 			<h3>Transport</h3>
-			<div style={{ marginBottom: 30, border: "10px solid #000" }}>
+			<div style={{ display: "inline-block", marginBottom: 30, border: "10px solid #000" }}>
 				<FlashySlideshow width={W} height={H} preset="transport">
 					{imageSlide("./images/image_a.jpg")}
 					{imageSlide("./images/image_b.jpg")}
@@ -89,7 +89,7 @@ function App() {
 			</div>
 
 			<h3>Transport2</h3>
-			<div style={{ marginBottom: 30, border: "10px solid #000" }}>
+			<div style={{ display: "inline-block", marginBottom: 30, border: "10px solid #000" }}>
 				<FlashySlideshow width={W} height={H} preset="transport2">
 					{imageSlide("./images/image_a.jpg")}
 					{imageSlide("./images/image_b.jpg")}
@@ -98,7 +98,7 @@ function App() {
 			</div>
 
 			<h3>Custom</h3>
-			<div style={{ marginBottom: 30, border: "10px solid #000" }}>
+			<div style={{ display: "inline-block", marginBottom: 30, border: "10px solid #000" }}>
 				<FlashySlideshow
 					width={W}
 					height={H}

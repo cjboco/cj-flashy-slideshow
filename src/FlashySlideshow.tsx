@@ -1,4 +1,4 @@
-import { Children, useCallback, useEffect, useRef, useState } from "react";
+import { Children, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { applyPreset } from "./presets";
 import type { BlockData, FlashySlideshowProps, ResolvedOptions } from "./types";
 import {
@@ -78,32 +78,32 @@ export function FlashySlideshow({
 		[slideCount],
 	);
 
-	// Compute options and block data
-	const presetOverrides = preset ? applyPreset(preset, width, height) : {};
-	const opts = resolveOptions(
-		{ preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, sloppy },
-		width,
-		height,
-		presetOverrides,
-	);
+	// Compute options and block data (memoized to keep stable references)
+	const opts = useMemo(() => {
+		const presetOverrides = preset ? applyPreset(preset, width, height) : {};
+		return resolveOptions(
+			{ preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, sloppy },
+			width,
+			height,
+			presetOverrides,
+		);
+	}, [preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, sloppy, width, height]);
 
 	const blockW = Math.ceil(width / opts.xBlocks);
 	const blockH = Math.ceil(height / opts.yBlocks);
 	const totalBlocks = opts.xBlocks * opts.yBlocks;
 	const rounded = opts.style === "rounded";
 
-	// Build block data (stable across renders via ref)
-	const blocksRef = useRef<BlockData[]>([]);
-	if (blocksRef.current.length !== totalBlocks || stateRef.current === null) {
-		const blocks: BlockData[] = [];
+	// Build block data (memoized for stable reference)
+	const blocks = useMemo(() => {
+		const result: BlockData[] = [];
 		for (let y = 0; y < opts.yBlocks; y++) {
 			for (let x = 0; x < opts.xBlocks; x++) {
-				blocks.push(createBlockData(x, y, blockW, blockH, opts, width, height));
+				result.push(createBlockData(x, y, blockW, blockH, opts, width, height));
 			}
 		}
-		blocksRef.current = blocks;
-	}
-	const blocks = blocksRef.current;
+		return result;
+	}, [opts, blockW, blockH, width, height]);
 
 	// Animation effect
 	useEffect(() => {
@@ -156,22 +156,16 @@ export function FlashySlideshow({
 				const el = blockEls[i];
 				if (!el) continue;
 
-				const cellCenterX = blockW * b.x + blockW / 2 - opts.minBlockSize / 2;
-				const cellCenterY = blockH * b.y + blockH / 2 - opts.minBlockSize / 2;
-
+				// Position clip at the start location (off-screen or edge)
 				el.style.clipPath = computeClipInset(
-					cellCenterY,
-					cellCenterX,
+					b.startTop,
+					b.startLeft,
 					opts.minBlockSize,
 					opts.minBlockSize,
 					width,
 					height,
 					rounded,
 				);
-
-				const translateX = b.startLeft - cellCenterX;
-				const translateY = b.startTop - cellCenterY;
-				el.style.transform = `translate(${translateX}px, ${translateY}px)`;
 				el.style.opacity = String(b.opacity);
 			}
 
@@ -182,6 +176,9 @@ export function FlashySlideshow({
 			if (!state.mounted) return;
 			state.completedBlocks = 0;
 			state.animating = true;
+
+			// Reset block positions while still hidden
+			resetBlocks();
 
 			setNextSlide(state.nextSlide);
 			setShowBlocks(true);
@@ -197,9 +194,6 @@ export function FlashySlideshow({
 					const el = blockEls[i];
 					if (!el) continue;
 
-					const cellCenterX = blockW * b.x + blockW / 2 - opts.minBlockSize / 2;
-					const cellCenterY = blockH * b.y + blockH / 2 - opts.minBlockSize / 2;
-
 					const midCenterX =
 						blockW * b.x +
 						blockW / 2 -
@@ -214,14 +208,9 @@ export function FlashySlideshow({
 					const phase1Duration = opts.sloppy ? randomRange(350, 1250) : 650;
 					const phase2Duration = opts.sloppy ? randomRange(250, 850) : 650;
 
-					const startTranslateX = b.startLeft - cellCenterX;
-					const startTranslateY = b.startTop - cellCenterY;
-					const midTranslateX = midCenterX - cellCenterX;
-					const midTranslateY = midCenterY - cellCenterY;
-
-					const smallClip = computeClipInset(
-						cellCenterY,
-						cellCenterX,
+					const startClip = computeClipInset(
+						b.startTop,
+						b.startLeft,
 						opts.minBlockSize,
 						opts.minBlockSize,
 						width,
@@ -229,17 +218,21 @@ export function FlashySlideshow({
 						rounded,
 					);
 
-					// Phase 1: fly from start to grid center
+					const midClip = computeClipInset(
+						midCenterY,
+						midCenterX,
+						opts.minBlockSize,
+						opts.minBlockSize,
+						width,
+						height,
+						rounded,
+					);
+
+					// Phase 1: move clip from start position to grid center
 					const phase1 = el.animate(
 						[
-							{
-								transform: `translate(${startTranslateX}px, ${startTranslateY}px)`,
-								clipPath: smallClip,
-							},
-							{
-								transform: `translate(${midTranslateX}px, ${midTranslateY}px)`,
-								clipPath: smallClip,
-							},
+							{ clipPath: startClip },
+							{ clipPath: midClip },
 						],
 						{ duration: phase1Duration, easing: "linear", fill: "forwards" },
 					);
@@ -247,7 +240,7 @@ export function FlashySlideshow({
 					phase1.onfinish = () => {
 						if (!state.mounted) return;
 
-						// Phase 2: expand clip to full cell, remove transform offset
+						// Phase 2: expand clip from small at center to full cell
 						const expandedClip = computeClipInset(
 							b.endTop,
 							b.endLeft,
@@ -261,12 +254,10 @@ export function FlashySlideshow({
 						const phase2 = el.animate(
 							[
 								{
-									transform: `translate(${midTranslateX}px, ${midTranslateY}px)`,
-									clipPath: smallClip,
+									clipPath: midClip,
 									opacity: String(b.opacity),
 								},
 								{
-									transform: "translate(0px, 0px)",
 									clipPath: expandedClip,
 									opacity: "1",
 								},
@@ -277,9 +268,9 @@ export function FlashySlideshow({
 						phase2.onfinish = () => {
 							if (!state.mounted) return;
 
-							el.style.transform = "translate(0px, 0px)";
 							el.style.clipPath = expandedClip;
 							el.style.opacity = "1";
+							phase1.cancel();
 							phase2.cancel();
 
 							state.completedBlocks++;
@@ -291,7 +282,6 @@ export function FlashySlideshow({
 								setShowBlocks(false);
 
 								onSlideChangeRef.current?.(state.currentSlide);
-								resetBlocks();
 
 								state.timer = setTimeout(() => {
 									if (state.mounted) animateBlocks();
@@ -304,9 +294,6 @@ export function FlashySlideshow({
 		}
 
 		// Initialize
-		resetBlocks();
-		setShowBlocks(false);
-
 		state.timer = setTimeout(() => {
 			if (state.mounted) animateBlocks();
 		}, opts.delay);
@@ -363,28 +350,28 @@ export function FlashySlideshow({
 			</div>
 
 			{/* Block layer: each block is a full-size div clipped to its grid cell */}
-			{showBlocks &&
-				blocks.map((b, i) => (
-					<div
-						key={`${b.x}-${b.y}`}
-						ref={(el) => {
-							blockRefsRef.current[i] = el;
-						}}
-						className="cj-flashy-block"
-						style={{
-							position: "absolute",
-							top: 0,
-							left: 0,
-							width: `${width}px`,
-							height: `${height}px`,
-							zIndex: 2,
-							overflow: "hidden",
-							pointerEvents: "none",
-						}}
-					>
-						{slides[nextSlide]}
-					</div>
-				))}
+			{blocks.map((b, i) => (
+				<div
+					key={`${b.x}-${b.y}`}
+					ref={(el) => {
+						blockRefsRef.current[i] = el;
+					}}
+					className="cj-flashy-block"
+					style={{
+						position: "absolute",
+						top: 0,
+						left: 0,
+						width: `${width}px`,
+						height: `${height}px`,
+						zIndex: 2,
+						overflow: "hidden",
+						pointerEvents: "none",
+						visibility: showBlocks ? "visible" : "hidden",
+					}}
+				>
+					{slides[nextSlide]}
+				</div>
+			))}
 		</div>
 	);
 }
