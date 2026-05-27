@@ -325,24 +325,64 @@ export function FlashySlideshow({
 						if (!state.mounted) return;
 
 						// Phase 2: expand from small at center to full cell
-						let expandedProps: Record<string, string>;
+						let expandTop: number, expandLeft: number, expandW: number, expandH: number;
 						if (rounded) {
 							const cx = blockW * b.x + blockW / 2;
 							const cy = blockH * b.y + blockH / 2;
 							const bigR = Math.ceil(Math.hypot(blockW, blockH));
-							expandedProps = getRegionProps(
-								cy - bigR, cx - bigR, bigR * 2, bigR * 2,
-								width, height, true, feathered,
-							);
+							expandTop = cy - bigR;
+							expandLeft = cx - bigR;
+							expandW = bigR * 2;
+							expandH = bigR * 2;
 						} else {
-							expandedProps = getRegionProps(
-								b.endTop, b.endLeft, blockW * 2, blockH * 2,
-								width, height, false, feathered,
-							);
+							expandTop = b.endTop;
+							expandLeft = b.endLeft;
+							expandW = blockW * 2;
+							expandH = blockH * 2;
 						}
 
-						const phase2 = el.animate(
-							[
+						const expandedProps = getRegionProps(
+							expandTop, expandLeft, expandW, expandH,
+							width, height, rounded, feathered,
+						);
+
+						// When feathered, inflate the final mask so soft edges
+						// get pushed outside the visible area
+						let finalProps: Record<string, string>;
+						if (feathered) {
+							const inflate = opts.feather / 100;
+							const padW = expandW * inflate;
+							const padH = expandH * inflate;
+							finalProps = getRegionProps(
+								expandTop - padH, expandLeft - padW,
+								expandW + padW * 2, expandH + padH * 2,
+								width, height, rounded, true,
+							);
+						} else {
+							finalProps = expandedProps;
+						}
+
+						const phase2Keyframes: Keyframe[] = feathered
+							? [
+								{
+									...midProps,
+									opacity: String(b.opacity),
+									...(blurVal && { filter: blurVal }),
+									offset: 0,
+								},
+								{
+									...expandedProps,
+									opacity: "1",
+									...(blurVal && { filter: "blur(0px)" }),
+									offset: 0.75,
+								},
+								{
+									...finalProps,
+									opacity: "1",
+									offset: 1.0,
+								},
+							]
+							: [
 								{
 									...midProps,
 									opacity: String(b.opacity),
@@ -353,14 +393,17 @@ export function FlashySlideshow({
 									opacity: "1",
 									...(blurVal && { filter: "blur(0px)" }),
 								},
-							],
+							];
+
+						const phase2 = el.animate(
+							phase2Keyframes,
 							{ duration: phase2Duration, fill: "forwards" },
 						);
 
 						phase2.onfinish = () => {
 							if (!state.mounted) return;
 
-							applyRegionStyle(el, expandedProps);
+							applyRegionStyle(el, finalProps);
 							el.style.opacity = "1";
 							el.style.filter = "";
 							phase1.cancel();
