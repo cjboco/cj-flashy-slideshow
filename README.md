@@ -75,6 +75,31 @@ You can freely mix images and HTML slides:
 </FlashySlideshow>
 ```
 
+### Wipe Transitions
+
+Wipe directions create a classic film-style wipe where the transition edge has a flashy particle effect. The reveal sweeps across the image as a wave — blocks behind the edge are fully revealed, blocks at the edge are mid-animation, and blocks ahead are untouched.
+
+```tsx
+<FlashySlideshow width={640} height={400} preset="wipe">
+  <img src="/photos/nature-1.jpg" alt="Nature" />
+  <img src="/photos/nature-2.jpg" alt="Mountains" />
+</FlashySlideshow>
+```
+
+You can use any `wipe*` direction with custom settings:
+
+```tsx
+<FlashySlideshow
+  width={640}
+  height={400}
+  direction="wipeTopLeft"
+  randomize
+  blur={3}
+>
+  {/* slides */}
+</FlashySlideshow>
+```
+
 ## Props
 
 | Prop            | Type                      | Default    | Description                                          |
@@ -84,7 +109,7 @@ You can freely mix images and HTML slides:
 | `children`      | `ReactNode[]`             | _required_ | Slide content (each child is one slide)              |
 | `preset`        | `Preset`                  | `"bricks"` | Animation preset name                                |
 | `delay`         | `number`                  | varies     | Milliseconds between transitions                     |
-| `direction`     | `Direction`               | varies     | Direction blocks enter from                          |
+| `direction`     | `Direction`               | varies     | Direction blocks enter from (includes wipe variants) |
 | `style`         | `BlockStyle`              | `"normal"` | Block shape (`"normal"` or `"rounded"`)              |
 | `translucent`   | `boolean`                 | `false`    | Semi-transparent blocks during transition            |
 | `speed`         | `number`                  | `650`      | Base duration per animation phase in ms (100-2500)   |
@@ -115,6 +140,8 @@ You can freely mix images and HTML slides:
 | `dissolve`   | Soft fade-in with blur and feathered edges, no directional movement.                 |
 | `vortex`     | Spinning blocks swirl in from all directions.                                        |
 | `pixelate`   | Tiny blocks pop in at their grid positions, materializing the image.                 |
+| `wipe`         | Classic wipe from the left with a flashy particle edge.                              |
+| `wipeDissolve` | Soft wipe with rounded blocks, blur, and feathered particle edge.                    |
 
 ## Types
 
@@ -131,7 +158,9 @@ type Preset =
   | "cascade"
   | "dissolve"
   | "vortex"
-  | "pixelate";
+  | "pixelate"
+  | "wipe"
+  | "wipeDissolve";
 
 type Direction =
   | "top"
@@ -143,7 +172,15 @@ type Direction =
   | "bottomright"
   | "right"
   | "random"
-  | "none";
+  | "none"
+  | "wipeLeft"
+  | "wipeRight"
+  | "wipeTop"
+  | "wipeBottom"
+  | "wipeTopLeft"
+  | "wipeTopRight"
+  | "wipeBottomLeft"
+  | "wipeBottomRight";
 
 type BlockStyle = "normal" | "rounded";
 ```
