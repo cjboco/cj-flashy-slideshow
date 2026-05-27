@@ -1,23 +1,59 @@
 {
   "name": "cj-flashy-slideshow",
-  "version": "3.0.0",
-  "description": "A JavaScript library to give your slideshows some Flash-like transitoflashy transitions.",
-  "main": "index.html",
+  "version": "4.0.0",
+  "description": "A React component that gives your slideshows some flash-like transitions.",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite serve demo",
+    "build": "vite build",
+    "lint": "biome check src",
+    "lint:fix": "biome check --write src",
+    "format": "biome format --write src",
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/cjboco/CJ-Flashy-Slideshow.git"
   },
   "keywords": [
-    "javascript",
-    "slideshow"
+    "react",
+    "slideshow",
+    "transitions",
+    "animation",
+    "carousel"
   ],
   "author": "Doug Jones",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/cjboco/CJ-Flashy-Slideshow/issues"
   },
-  "homepage": "https://github.com/cjboco/CJ-Flashy-Slideshow#readme"
+  "homepage": "https://github.com/cjboco/CJ-Flashy-Slideshow#readme",
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.4.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "typescript": "^5.8.0",
+    "vite": "^6.3.0",
+    "vite-plugin-dts": "^4.5.0",
+    "@biomejs/biome": "^2.0.0"
+  }
 }

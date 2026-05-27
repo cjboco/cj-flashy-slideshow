@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npx biome:*)",
+      "Bash(npx vite:*)",
+      "Bash(npm pack:*)"
+    ]
+  }
+}
