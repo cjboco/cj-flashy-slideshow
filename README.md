@@ -75,6 +75,30 @@ You can freely mix images and HTML slides:
 </FlashySlideshow>
 ```
 
+### Auto-Sizing
+
+When `width` and `height` are omitted, the slideshow fills its parent container at 100%. The component uses a `ResizeObserver` internally to measure pixel dimensions for the animation math. The `objectFit` prop controls how `<img>` and `<video>` children fill the space.
+
+```tsx
+{/* Fills the parent container, images cover the area */}
+<div style={{ width: "100vw", height: "100vh" }}>
+  <FlashySlideshow preset="dissolve">
+    <img src="/photos/wide.jpg" alt="Wide" />
+    <img src="/photos/tall.jpg" alt="Tall" />
+  </FlashySlideshow>
+</div>
+
+{/* Contain images (letterboxed) instead of cropping */}
+<div style={{ width: 800, height: 600 }}>
+  <FlashySlideshow objectFit="contain" preset="bricks">
+    <img src="/photos/nature-1.jpg" alt="Nature" />
+    <img src="/photos/nature-2.jpg" alt="Mountains" />
+  </FlashySlideshow>
+</div>
+```
+
+> **Note:** The parent element must have a defined height when using auto-sizing, otherwise the `100%` height will collapse to zero.
+
 ### Wipe Transitions
 
 Wipe directions create a classic film-style wipe where the transition edge has a flashy particle effect. The reveal sweeps across the image as a wave — blocks behind the edge are fully revealed, blocks at the edge are mid-animation, and blocks ahead are untouched.
@@ -104,8 +128,9 @@ You can use any `wipe*` direction with custom settings:
 
 | Prop            | Type                      | Default    | Description                                          |
 | --------------- | ------------------------- | ---------- | ---------------------------------------------------- |
-| `width`         | `number`                  | _required_ | Width of the slideshow in pixels                     |
-| `height`        | `number`                  | _required_ | Height of the slideshow in pixels                    |
+| `width`         | `number`                  | `100%`     | Width of the slideshow in pixels (omit for auto)     |
+| `height`        | `number`                  | `100%`     | Height of the slideshow in pixels (omit for auto)    |
+| `objectFit`     | `ObjectFit`               | `"cover"`  | How `<img>`/`<video>` children fill the container    |
 | `children`      | `ReactNode[]`             | _required_ | Slide content (each child is one slide)              |
 | `preset`        | `Preset`                  | `"bricks"` | Animation preset name                                |
 | `delay`         | `number`                  | varies     | Milliseconds between transitions                     |
@@ -183,6 +208,8 @@ type Direction =
   | "wipeBottomRight";
 
 type BlockStyle = "normal" | "rounded";
+
+type ObjectFit = "cover" | "contain";
 ```
 
 ## License

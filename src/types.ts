@@ -55,10 +55,13 @@ export interface FlashySlideshowOptions {
 	feather?: number;
 }
 
+export type ObjectFit = "cover" | "contain";
+
 export interface FlashySlideshowProps extends FlashySlideshowOptions {
 	children: ReactNode[];
-	width: number;
-	height: number;
+	width?: number;
+	height?: number;
+	objectFit?: ObjectFit;
 	className?: string;
 	onSlideChange?: (index: number) => void;
 }

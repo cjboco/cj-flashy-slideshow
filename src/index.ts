@@ -4,5 +4,6 @@ export type {
 	Direction,
 	FlashySlideshowOptions,
 	FlashySlideshowProps,
+	ObjectFit,
 	Preset,
 } from "./types";

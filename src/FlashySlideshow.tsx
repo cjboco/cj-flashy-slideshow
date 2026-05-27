@@ -1,4 +1,4 @@
-import { Children, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Children, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { applyPreset } from "./presets";
 import type { BlockData, FlashySlideshowProps, ResolvedOptions } from "./types";
 import {
@@ -76,8 +76,9 @@ function applyRegionStyle(el: HTMLDivElement, props: Record<string, string>) {
 
 export function FlashySlideshow({
 	children,
-	width,
-	height,
+	width: widthProp,
+	height: heightProp,
+	objectFit = "cover",
 	preset,
 	xBlocks,
 	yBlocks,
@@ -98,12 +99,43 @@ export function FlashySlideshow({
 	const slides = Children.toArray(children);
 	const stateRef = useRef<AnimState | null>(null);
 	const blockRefsRef = useRef<(HTMLDivElement | null)[]>([]);
+	const containerRef = useRef<HTMLDivElement | null>(null);
 	const onSlideChangeRef = useRef(onSlideChange);
 	onSlideChangeRef.current = onSlideChange;
+	const scopeId = useId();
 
 	const [currentSlide, setCurrentSlide] = useState(0);
 	const [nextSlide, setNextSlide] = useState(1);
 	const [showBlocks, setShowBlocks] = useState(false);
+	const [measuredSize, setMeasuredSize] = useState<{ w: number; h: number } | null>(null);
+
+	const autoSize = widthProp == null || heightProp == null;
+
+	// Measure container when no explicit width/height
+	useEffect(() => {
+		if (!autoSize) return;
+		const el = containerRef.current;
+		if (!el) return;
+
+		const observer = new ResizeObserver((entries) => {
+			const entry = entries[0];
+			if (!entry) return;
+			const { width: w, height: h } = entry.contentRect;
+			if (w > 0 && h > 0) {
+				setMeasuredSize((prev) =>
+					prev && prev.w === Math.round(w) && prev.h === Math.round(h)
+						? prev
+						: { w: Math.round(w), h: Math.round(h) },
+				);
+			}
+		});
+		observer.observe(el);
+		return () => observer.disconnect();
+	}, [autoSize]);
+
+	const width = widthProp ?? measuredSize?.w ?? 0;
+	const height = heightProp ?? measuredSize?.h ?? 0;
+	const hasSize = width > 0 && height > 0;
 
 	const slideCount = slides.length;
 
@@ -504,55 +536,67 @@ export function FlashySlideshow({
 
 	if (slides.length === 0) return null;
 
+	const cssScope = `[data-flashy="${CSS.escape(scopeId)}"]`;
+	const fitStyle = `${cssScope} img,${cssScope} video{width:100%;height:100%;object-fit:${objectFit}}`;
+
+	const containerStyle: React.CSSProperties = {
+		position: "relative",
+		overflow: "hidden",
+		...(widthProp != null ? { width: `${widthProp}px` } : { width: "100%" }),
+		...(heightProp != null ? { height: `${heightProp}px` } : { height: "100%" }),
+	};
+
 	return (
 		<div
+			ref={containerRef}
 			className={className}
-			style={{
-				position: "relative",
-				width: `${width}px`,
-				height: `${height}px`,
-				overflow: "hidden",
-			}}
+			data-flashy={scopeId}
+			style={containerStyle}
 		>
-			{/* Bottom layer: current slide */}
-			<div
-				style={{
-					position: "absolute",
-					top: 0,
-					left: 0,
-					width: `${width}px`,
-					height: `${height}px`,
-					zIndex: 1,
-					overflow: "hidden",
-				}}
-			>
-				{slides[currentSlide]}
-			</div>
+			<style>{fitStyle}</style>
+			{hasSize && (
+				<>
+					{/* Bottom layer: current slide */}
+					<div
+						style={{
+							position: "absolute",
+							top: 0,
+							left: 0,
+							width: `${width}px`,
+							height: `${height}px`,
+							zIndex: 1,
+							overflow: "hidden",
+						}}
+					>
+						{slides[currentSlide]}
+					</div>
 
-			{/* Block layer: each block is a full-size div clipped to its grid cell */}
-			{blocks.map((b, i) => (
-				<div
-					key={`${b.x}-${b.y}`}
-					ref={(el) => {
-						blockRefsRef.current[i] = el;
-					}}
-					className="cj-flashy-block"
-					style={{
-						position: "absolute",
-						top: 0,
-						left: 0,
-						width: `${width}px`,
-						height: `${height}px`,
-						zIndex: 2,
-						overflow: "hidden",
-						pointerEvents: "none",
-						visibility: showBlocks ? "visible" : "hidden",
-						...maskGradientStyle,
-					}}
-				>
-					{slides[nextSlide]}
-				</div>
-			))}
+					{/* Block layer: each block is a full-size div clipped to its grid cell */}
+					{blocks.map((b, i) => (
+						<div
+							key={`${b.x}-${b.y}`}
+							ref={(el) => {
+								blockRefsRef.current[i] = el;
+							}}
+							className="cj-flashy-block"
+							style={{
+								position: "absolute",
+								top: 0,
+								left: 0,
+								width: `${width}px`,
+								height: `${height}px`,
+								zIndex: 2,
+								overflow: "hidden",
+								pointerEvents: "none",
+								visibility: showBlocks ? "visible" : "hidden",
+								...maskGradientStyle,
+							}}
+						>
+							{slides[nextSlide]}
+						</div>
+					))}
+				</>
+			)}
 		</div>
 	);
 }
