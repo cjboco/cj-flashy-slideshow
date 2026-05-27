@@ -76,22 +76,25 @@ You can freely mix images and HTML slides:
 
 ## Props
 
-| Prop            | Type                      | Default    | Description                               |
-| --------------- | ------------------------- | ---------- | ----------------------------------------- |
-| `width`         | `number`                  | _required_ | Width of the slideshow in pixels          |
-| `height`        | `number`                  | _required_ | Height of the slideshow in pixels         |
-| `children`      | `ReactNode[]`             | _required_ | Slide content (each child is one slide)   |
-| `preset`        | `Preset`                  | `"bricks"` | Animation preset name                     |
-| `delay`         | `number`                  | varies     | Milliseconds between transitions          |
-| `direction`     | `Direction`               | varies     | Direction blocks enter from               |
-| `style`         | `BlockStyle`              | `"normal"` | Block shape (`"normal"` or `"rounded"`)   |
-| `translucent`   | `boolean`                 | `false`    | Semi-transparent blocks during transition |
-| `sloppy`        | `boolean`                 | `false`    | Randomize block timing and positioning    |
-| `xBlocks`       | `number`                  | varies     | Number of horizontal blocks               |
-| `yBlocks`       | `number`                  | varies     | Number of vertical blocks                 |
-| `minBlockSize`  | `number`                  | varies     | Minimum block size in pixels              |
-| `className`     | `string`                  | —          | CSS class for the container               |
-| `onSlideChange` | `(index: number) => void` | —          | Callback when the active slide changes    |
+| Prop            | Type                      | Default    | Description                                          |
+| --------------- | ------------------------- | ---------- | ---------------------------------------------------- |
+| `width`         | `number`                  | _required_ | Width of the slideshow in pixels                     |
+| `height`        | `number`                  | _required_ | Height of the slideshow in pixels                    |
+| `children`      | `ReactNode[]`             | _required_ | Slide content (each child is one slide)              |
+| `preset`        | `Preset`                  | `"bricks"` | Animation preset name                                |
+| `delay`         | `number`                  | varies     | Milliseconds between transitions                     |
+| `direction`     | `Direction`               | varies     | Direction blocks enter from                          |
+| `style`         | `BlockStyle`              | `"normal"` | Block shape (`"normal"` or `"rounded"`)              |
+| `translucent`   | `boolean`                 | `false`    | Semi-transparent blocks during transition            |
+| `sloppy`        | `boolean`                 | `false`    | Randomize block timing and positioning               |
+| `xBlocks`       | `number`                  | varies     | Number of horizontal blocks                          |
+| `yBlocks`       | `number`                  | varies     | Number of vertical blocks                            |
+| `minBlockSize`  | `number`                  | varies     | Minimum block size in pixels                         |
+| `rotation`      | `number`                  | `0`        | Degrees of arc for the block flight path (0 = straight line) |
+| `blur`          | `number`                  | `0`        | Starting blur in pixels (clears as blocks expand)    |
+| `feather`       | `number`                  | `0`        | Soft edge percentage (0-50) using gradient masks     |
+| `className`     | `string`                  | —          | CSS class for the container                          |
+| `onSlideChange` | `(index: number) => void` | —          | Callback when the active slide changes               |
 
 ## Presets
 
@@ -104,6 +107,11 @@ You can freely mix images and HTML slides:
 | `blinds2`    | Vertical bands expand to reveal the next slide.                                      |
 | `transport`  | Translucent horizontal strips slide in.                                              |
 | `transport2` | Translucent vertical strips slide in.                                                |
+| `spiral`     | Rounded blocks spiral in from random directions with blur.                           |
+| `cascade`    | Blocks tumble from the top like falling cards.                                       |
+| `dissolve`   | Soft fade-in with blur and feathered edges, no directional movement.                 |
+| `vortex`     | Spinning blocks swirl in from all directions.                                        |
+| `pixelate`   | Tiny blocks pop in at their grid positions, materializing the image.                 |
 
 ## Types
 
@@ -115,7 +123,12 @@ type Preset =
   | "blinds"
   | "blinds2"
   | "transport"
-  | "transport2";
+  | "transport2"
+  | "spiral"
+  | "cascade"
+  | "dissolve"
+  | "vortex"
+  | "pixelate";
 
 type Direction =
   | "top"
