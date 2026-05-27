@@ -39,7 +39,6 @@ export interface FlashySlideshowOptions {
 	translucent?: boolean;
 	sloppy?: boolean;
 	rotation?: number;
-	scale?: number;
 	blur?: number;
 	feather?: number;
 }
@@ -73,7 +72,6 @@ export interface ResolvedOptions {
 	translucent: boolean;
 	sloppy: boolean;
 	rotation: number;
-	scale: number;
 	blur: number;
 	feather: number;
 }

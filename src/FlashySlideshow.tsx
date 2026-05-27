@@ -86,7 +86,6 @@ export function FlashySlideshow({
 	translucent,
 	sloppy,
 	rotation,
-	scale,
 	blur,
 	feather,
 	className,
@@ -113,12 +112,12 @@ export function FlashySlideshow({
 	const opts = useMemo(() => {
 		const presetOverrides = preset ? applyPreset(preset, width, height) : {};
 		return resolveOptions(
-			{ preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, sloppy, rotation, scale, blur, feather },
+			{ preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, sloppy, rotation, blur, feather },
 			width,
 			height,
 			presetOverrides,
 		);
-	}, [preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, sloppy, rotation, scale, blur, feather, width, height]);
+	}, [preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, sloppy, rotation, blur, feather, width, height]);
 
 	const blockW = Math.ceil(width / opts.xBlocks);
 	const blockH = Math.ceil(height / opts.yBlocks);
@@ -215,9 +214,8 @@ export function FlashySlideshow({
 				const el = blockEls[i];
 				if (!el) continue;
 
-				const scaledSize = opts.minBlockSize * opts.scale;
 				applyRegionStyle(el, getRegionProps(
-					b.startTop, b.startLeft, scaledSize, scaledSize,
+					b.startTop, b.startLeft, opts.minBlockSize, opts.minBlockSize,
 					width, height, rounded, feathered,
 				));
 				el.style.opacity = String(b.opacity);
@@ -249,24 +247,24 @@ export function FlashySlideshow({
 					const el = blockEls[i];
 					if (!el) continue;
 
-					const scaledSize = opts.minBlockSize * opts.scale;
+					const mbs = opts.minBlockSize;
 
 					const midCenterX =
 						blockW * b.x +
 						blockW / 2 -
-						scaledSize / 2 +
-						(opts.sloppy ? randomRange(0, scaledSize) - scaledSize / 2 : 0);
+						mbs / 2 +
+						(opts.sloppy ? randomRange(0, mbs) - mbs / 2 : 0);
 					const midCenterY =
 						blockH * b.y +
 						blockH / 2 -
-						scaledSize / 2 +
-						(opts.sloppy ? randomRange(0, scaledSize) - scaledSize / 2 : 0);
+						mbs / 2 +
+						(opts.sloppy ? randomRange(0, mbs) - mbs / 2 : 0);
 
 					const phase1Duration = opts.sloppy ? randomRange(350, 1250) : 650;
 					const phase2Duration = opts.sloppy ? randomRange(250, 850) : 650;
 
 					const midProps = getRegionProps(
-						midCenterY, midCenterX, scaledSize, scaledSize,
+						midCenterY, midCenterX, mbs, mbs,
 						width, height, rounded, feathered,
 					);
 
@@ -282,7 +280,7 @@ export function FlashySlideshow({
 					if (blockRotation === 0) {
 						// Straight path
 						const startProps = getRegionProps(
-							b.startTop, b.startLeft, scaledSize, scaledSize,
+							b.startTop, b.startLeft, mbs, mbs,
 							width, height, rounded, feathered,
 						);
 						phase1Keyframes.push(
@@ -291,10 +289,10 @@ export function FlashySlideshow({
 						);
 					} else {
 						// Spiral arc path from start to center
-						const startCX = b.startLeft + scaledSize / 2;
-						const startCY = b.startTop + scaledSize / 2;
-						const midCX = midCenterX + scaledSize / 2;
-						const midCY = midCenterY + scaledSize / 2;
+						const startCX = b.startLeft + mbs / 2;
+						const startCY = b.startTop + mbs / 2;
+						const midCX = midCenterX + mbs / 2;
+						const midCY = midCenterY + mbs / 2;
 						const dx = startCX - midCX;
 						const dy = startCY - midCY;
 						const startAngle = Math.atan2(dy, dx);
@@ -308,10 +306,10 @@ export function FlashySlideshow({
 							const radius = startRadius * (1 - t);
 							const cx = midCX + Math.cos(angle) * radius;
 							const cy = midCY + Math.sin(angle) * radius;
-							const clipX = cx - scaledSize / 2;
-							const clipY = cy - scaledSize / 2;
+							const clipX = cx - mbs / 2;
+							const clipY = cy - mbs / 2;
 							phase1Keyframes.push({
-								...getRegionProps(clipY, clipX, scaledSize, scaledSize, width, height, rounded, feathered),
+								...getRegionProps(clipY, clipX, mbs, mbs, width, height, rounded, feathered),
 								...(blurVal && { filter: blurVal }),
 							});
 						}

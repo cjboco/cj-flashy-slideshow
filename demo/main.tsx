@@ -71,8 +71,6 @@ interface Settings {
 	sloppy: boolean;
 	rotation: number;
 	rotationEnabled: boolean;
-	scale: number;
-	scaleEnabled: boolean;
 	blur: number;
 	blurEnabled: boolean;
 	feather: number;
@@ -84,7 +82,6 @@ const PROP_DEFAULTS = {
 	direction: "left" as Direction, style: "normal" as BlockStyle,
 	translucent: false, sloppy: false,
 	rotation: 180, rotationEnabled: false,
-	scale: 0.5, scaleEnabled: false,
 	blur: 4, blurEnabled: false,
 	feather: 15, featherEnabled: false,
 };
@@ -103,8 +100,6 @@ function resolvePresetValues(preset: Preset): Omit<Settings, "usePreset" | "pres
 		sloppy: resolved.sloppy,
 		rotation: resolved.rotation !== 0 ? resolved.rotation : 180,
 		rotationEnabled: resolved.rotation !== 0,
-		scale: resolved.scale !== 1 ? resolved.scale : 0.5,
-		scaleEnabled: resolved.scale !== 1,
 		blur: resolved.blur !== 0 ? resolved.blur : 4,
 		blurEnabled: resolved.blur !== 0,
 		feather: resolved.feather !== 0 ? resolved.feather : 15,
@@ -127,7 +122,6 @@ function settingsToUrl(s: Settings): string {
 	if (s.translucent) p.set("tr", "1");
 	if (s.sloppy) p.set("sl", "1");
 	if (s.rotationEnabled) p.set("rot", String(s.rotation));
-	if (s.scaleEnabled) p.set("sc", String(s.scale));
 	if (s.blurEnabled) p.set("bl", String(s.blur));
 	if (s.featherEnabled) p.set("fe", String(s.feather));
 	const qs = p.toString();
@@ -160,8 +154,6 @@ function parseUrlSettings(): Settings {
 		sloppy: p.has("sl") ? p.get("sl") === "1" : base.sloppy,
 		rotation: p.has("rot") ? Number(p.get("rot")) : base.rotation,
 		rotationEnabled: p.has("rot"),
-		scale: p.has("sc") ? Number(p.get("sc")) : base.scale,
-		scaleEnabled: p.has("sc"),
 		blur: p.has("bl") ? Number(p.get("bl")) : base.blur,
 		blurEnabled: p.has("bl"),
 		feather: p.has("fe") ? Number(p.get("fe")) : base.feather,
@@ -322,7 +314,6 @@ function buildCodeExample(s: Settings): string {
 	if (s.translucent) lines.push("  translucent");
 	if (s.sloppy) lines.push("  sloppy");
 	if (s.rotationEnabled) lines.push(`  rotation={${s.rotation}}`);
-	if (s.scaleEnabled) lines.push(`  scale={${s.scale}}`);
 	if (s.blurEnabled) lines.push(`  blur={${s.blur}}`);
 	if (s.featherEnabled) lines.push(`  feather={${s.feather}}`);
 	return `<FlashySlideshow\n${lines.join("\n")}\n>\n  {/* slides */}\n</FlashySlideshow>`;
@@ -355,7 +346,7 @@ function App() {
 		}
 	}, []);
 
-	const toggleOptional = useCallback((prop: "rotation" | "scale" | "blur" | "feather", on: boolean) => {
+	const toggleOptional = useCallback((prop: "rotation" | "blur" | "feather", on: boolean) => {
 		setSettings((prev) => {
 			const enabledKey = `${prop}Enabled` as keyof Settings;
 			return { ...prev, [enabledKey]: on, usePreset: false };
@@ -482,7 +473,6 @@ function App() {
 								translucent={settings.translucent}
 								sloppy={settings.sloppy}
 								rotation={settings.rotationEnabled ? settings.rotation : 0}
-								scale={settings.scaleEnabled ? settings.scale : 1}
 								blur={settings.blurEnabled ? settings.blur : 0}
 								feather={settings.featherEnabled ? settings.feather : 0}
 								onSlideChange={setSlideIndex}
@@ -570,13 +560,6 @@ function App() {
 							onToggle={(on) => toggleOptional("rotation", on)}
 							onChange={(v) => update("rotation", v)}
 							min={0} max={1080} step={15} suffix="°"
-						/>
-						<OptionalRangeControl
-							label="scale" value={settings.scale}
-							enabled={settings.scaleEnabled}
-							onToggle={(on) => toggleOptional("scale", on)}
-							onChange={(v) => update("scale", v)}
-							min={0} max={1} step={0.05}
 						/>
 						<OptionalRangeControl
 							label="blur" value={settings.blur}

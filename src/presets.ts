@@ -71,13 +71,12 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 			return {
 				xBlocks: Math.round(w / 100),
 				yBlocks: Math.round(h / 100),
-				minBlockSize: Math.round(w / 100) * 20,
+				minBlockSize: Math.round(w / 100) * 10,
 				direction: "random",
 				style: "rounded",
 				translucent: true,
 				sloppy: true,
 				rotation: 360,
-				scale: 0.5,
 				blur: 3,
 				delay: 4000,
 			};
@@ -97,12 +96,11 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 			return {
 				xBlocks: Math.round(w / 80),
 				yBlocks: Math.round(h / 80),
-				minBlockSize: 3,
+				minBlockSize: 2,
 				direction: "none",
 				translucent: true,
 				sloppy: true,
 				blur: 8,
-				scale: 0.8,
 				feather: 20,
 				delay: 3000,
 			};
@@ -110,13 +108,12 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 			return {
 				xBlocks: Math.round(w / 80),
 				yBlocks: Math.round(h / 80),
-				minBlockSize: Math.round(w / 100) * 12,
+				minBlockSize: Math.round(w / 100) * 4,
 				direction: "random",
 				style: "rounded",
 				translucent: true,
 				sloppy: true,
 				rotation: 360,
-				scale: 0.3,
 				blur: 3,
 				delay: 3000,
 			};
@@ -127,7 +124,6 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 				minBlockSize: 0,
 				direction: "none",
 				sloppy: true,
-				scale: 0,
 				delay: 2000,
 			};
 		default:
