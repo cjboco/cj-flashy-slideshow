@@ -2,8 +2,9 @@
 
 A React component that gives your slideshows some flash-like transitions.
 
-[![npm version](https://img.shields.io/npm/v/cj-flashy-slideshow.svg)](https://www.npmjs.com/package/cj-flashy-slideshow)
+[![npm version](https://img.shields.io/npm/v/@cjboco/cj-flashy-slideshow.svg)](https://www.npmjs.com/package/@cjboco/cj-flashy-slideshow)
 [![license](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](https://github.com/cjboco/cj-flashy-slideshow/blob/master/LICENSE)
+[![deploy](https://img.shields.io/github/actions/workflow/status/cjboco/cj-flashy-slideshow/deploy-demo.yml?label=demo)](https://cjboco.github.io/cj-flashy-slideshow/)
 
 View the [online demo](https://cjboco.github.io/cj-flashy-slideshow/).
 
