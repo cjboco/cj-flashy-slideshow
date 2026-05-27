@@ -67,6 +67,68 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 				sloppy: true,
 				delay: 1250,
 			};
+		case "spiral":
+			return {
+				xBlocks: Math.round(w / 100),
+				yBlocks: Math.round(h / 100),
+				minBlockSize: Math.round(w / 100) * 20,
+				direction: "random",
+				style: "rounded",
+				translucent: true,
+				sloppy: true,
+				rotation: 360,
+				scale: 0.5,
+				blur: 3,
+				delay: 4000,
+			};
+		case "cascade":
+			return {
+				xBlocks: Math.round(w / 60),
+				yBlocks: Math.round(h / 60),
+				minBlockSize: 5,
+				direction: "top",
+				translucent: true,
+				sloppy: true,
+				rotation: 180,
+				blur: 2,
+				delay: 2500,
+			};
+		case "dissolve":
+			return {
+				xBlocks: Math.round(w / 80),
+				yBlocks: Math.round(h / 80),
+				minBlockSize: 3,
+				direction: "none",
+				translucent: true,
+				sloppy: true,
+				blur: 8,
+				scale: 0.8,
+				delay: 3000,
+			};
+		case "vortex":
+			return {
+				xBlocks: Math.round(w / 80),
+				yBlocks: Math.round(h / 80),
+				minBlockSize: Math.round(w / 100) * 12,
+				direction: "random",
+				style: "rounded",
+				translucent: true,
+				sloppy: true,
+				rotation: 360,
+				scale: 0.3,
+				blur: 3,
+				delay: 3000,
+			};
+		case "pixelate":
+			return {
+				xBlocks: Math.round(w / 20),
+				yBlocks: Math.round(h / 20),
+				minBlockSize: 0,
+				direction: "none",
+				sloppy: true,
+				scale: 0,
+				delay: 2000,
+			};
 		default:
 			return {
 				xBlocks: Math.round(w / 100),

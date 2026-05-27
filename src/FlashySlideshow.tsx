@@ -59,6 +59,9 @@ export function FlashySlideshow({
 	style,
 	translucent,
 	sloppy,
+	rotation,
+	scale,
+	blur,
 	className,
 	onSlideChange,
 }: FlashySlideshowProps) {
@@ -83,12 +86,12 @@ export function FlashySlideshow({
 	const opts = useMemo(() => {
 		const presetOverrides = preset ? applyPreset(preset, width, height) : {};
 		return resolveOptions(
-			{ preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, sloppy },
+			{ preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, sloppy, rotation, scale, blur },
 			width,
 			height,
 			presetOverrides,
 		);
-	}, [preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, sloppy, width, height]);
+	}, [preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, sloppy, rotation, scale, blur, width, height]);
 
 	const blockW = Math.ceil(width / opts.xBlocks);
 	const blockH = Math.ceil(height / opts.yBlocks);
@@ -158,16 +161,18 @@ export function FlashySlideshow({
 				if (!el) continue;
 
 				// Position clip at the start location (off-screen or edge)
+				const scaledSize = opts.minBlockSize * opts.scale;
 				el.style.clipPath = computeClipInset(
 					b.startTop,
 					b.startLeft,
-					opts.minBlockSize,
-					opts.minBlockSize,
+					scaledSize,
+					scaledSize,
 					width,
 					height,
 					rounded,
 				);
 				el.style.opacity = String(b.opacity);
+				el.style.filter = opts.blur > 0 ? `blur(${opts.blur}px)` : "";
 			}
 
 			setNextSlide(nextIdx);
@@ -195,46 +200,79 @@ export function FlashySlideshow({
 					const el = blockEls[i];
 					if (!el) continue;
 
+					const scaledSize = opts.minBlockSize * opts.scale;
+
 					const midCenterX =
 						blockW * b.x +
 						blockW / 2 -
-						opts.minBlockSize / 2 +
-						(opts.sloppy ? randomRange(0, opts.minBlockSize) - opts.minBlockSize / 2 : 0);
+						scaledSize / 2 +
+						(opts.sloppy ? randomRange(0, scaledSize) - scaledSize / 2 : 0);
 					const midCenterY =
 						blockH * b.y +
 						blockH / 2 -
-						opts.minBlockSize / 2 +
-						(opts.sloppy ? randomRange(0, opts.minBlockSize) - opts.minBlockSize / 2 : 0);
+						scaledSize / 2 +
+						(opts.sloppy ? randomRange(0, scaledSize) - scaledSize / 2 : 0);
 
 					const phase1Duration = opts.sloppy ? randomRange(350, 1250) : 650;
 					const phase2Duration = opts.sloppy ? randomRange(250, 850) : 650;
 
-					const startClip = computeClipInset(
-						b.startTop,
-						b.startLeft,
-						opts.minBlockSize,
-						opts.minBlockSize,
-						width,
-						height,
-						rounded,
-					);
-
 					const midClip = computeClipInset(
 						midCenterY,
 						midCenterX,
-						opts.minBlockSize,
-						opts.minBlockSize,
+						scaledSize,
+						scaledSize,
 						width,
 						height,
 						rounded,
 					);
 
+					// Build phase 1 keyframes — spiral path when rotation > 0
+					const blockRotation = opts.sloppy && opts.rotation !== 0
+						? opts.rotation + randomRange(-180, 180)
+						: opts.rotation;
+
+					const phase1Keyframes: Keyframe[] = [];
+
+					if (blockRotation === 0) {
+						// Straight path
+						const startClip = computeClipInset(
+							b.startTop, b.startLeft, scaledSize, scaledSize, width, height, rounded,
+						);
+						phase1Keyframes.push(
+							{ clipPath: startClip, filter: `blur(${opts.blur}px)` },
+							{ clipPath: midClip, filter: "blur(0px)" },
+						);
+					} else {
+						// Spiral arc path from start to center
+						const startCX = b.startLeft + scaledSize / 2;
+						const startCY = b.startTop + scaledSize / 2;
+						const midCX = midCenterX + scaledSize / 2;
+						const midCY = midCenterY + scaledSize / 2;
+						const dx = startCX - midCX;
+						const dy = startCY - midCY;
+						const startAngle = Math.atan2(dy, dx);
+						const startRadius = Math.sqrt(dx * dx + dy * dy);
+						const rotRad = (blockRotation * Math.PI) / 180;
+						const steps = Math.max(8, Math.ceil(Math.abs(blockRotation) / 30));
+
+						for (let k = 0; k <= steps; k++) {
+							const t = k / steps;
+							const angle = startAngle + rotRad * t;
+							const radius = startRadius * (1 - t);
+							const cx = midCX + Math.cos(angle) * radius;
+							const cy = midCY + Math.sin(angle) * radius;
+							const clipX = cx - scaledSize / 2;
+							const clipY = cy - scaledSize / 2;
+							phase1Keyframes.push({
+								clipPath: computeClipInset(clipY, clipX, scaledSize, scaledSize, width, height, rounded),
+								filter: `blur(${opts.blur * (1 - t)}px)`,
+							});
+						}
+					}
+
 					// Phase 1: move clip from start position to grid center
 					const phase1 = el.animate(
-						[
-							{ clipPath: startClip },
-							{ clipPath: midClip },
-						],
+						phase1Keyframes,
 						{ duration: phase1Duration, easing: "linear", fill: "forwards" },
 					);
 
@@ -246,7 +284,7 @@ export function FlashySlideshow({
 						if (rounded) {
 							const cx = blockW * b.x + blockW / 2;
 							const cy = blockH * b.y + blockH / 2;
-							const bigR = Math.ceil(Math.hypot(width, height));
+							const bigR = Math.ceil(Math.hypot(blockW, blockH));
 							expandedClip = computeClipInset(
 								cy - bigR, cx - bigR, bigR * 2, bigR * 2, width, height, true,
 							);
@@ -275,6 +313,7 @@ export function FlashySlideshow({
 
 							el.style.clipPath = expandedClip;
 							el.style.opacity = "1";
+							el.style.filter = "";
 							phase1.cancel();
 							phase2.cancel();
 

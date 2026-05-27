@@ -21,7 +21,12 @@ export type Preset =
 	| "blinds"
 	| "blinds2"
 	| "transport"
-	| "transport2";
+	| "transport2"
+	| "spiral"
+	| "cascade"
+	| "dissolve"
+	| "vortex"
+	| "pixelate";
 
 export interface FlashySlideshowOptions {
 	preset?: Preset;
@@ -33,6 +38,9 @@ export interface FlashySlideshowOptions {
 	style?: BlockStyle;
 	translucent?: boolean;
 	sloppy?: boolean;
+	rotation?: number;
+	scale?: number;
+	blur?: number;
 }
 
 export interface FlashySlideshowProps extends FlashySlideshowOptions {
@@ -63,4 +71,7 @@ export interface ResolvedOptions {
 	style: BlockStyle;
 	translucent: boolean;
 	sloppy: boolean;
+	rotation: number;
+	scale: number;
+	blur: number;
 }

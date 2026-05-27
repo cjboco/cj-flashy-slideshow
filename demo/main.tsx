@@ -11,6 +11,11 @@ const PRESETS: { value: Preset; label: string; description: string }[] = [
 	{ value: "blinds2", label: "Blinds 2", description: "Vertical blinds opening from the top" },
 	{ value: "transport", label: "Transport", description: "Translucent horizontal strips sliding in" },
 	{ value: "transport2", label: "Transport 2", description: "Translucent vertical strips sliding in" },
+	{ value: "spiral", label: "Spiral", description: "Blocks spin in from random directions with blur and scale" },
+	{ value: "cascade", label: "Cascade", description: "Blocks tumble from the top like falling cards" },
+	{ value: "dissolve", label: "Dissolve", description: "Soft fade-in with blur, no directional movement" },
+	{ value: "vortex", label: "Vortex", description: "Intense spinning blocks emerge from center with heavy rotation" },
+	{ value: "pixelate", label: "Pixelate", description: "Tiny blocks pop in at their grid positions, materializing the image" },
 ];
 
 type SlideType = "images" | "html" | "mixed";
@@ -43,7 +48,7 @@ const HTML_SLIDES = [
 	{
 		bg: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
 		title: "Flexible",
-		subtitle: "7 built-in presets",
+		subtitle: "12 built-in presets",
 	},
 	{
 		bg: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
@@ -433,6 +438,9 @@ function App() {
 									["direction", "Direction", "Block entry direction"],
 									["translucent", "boolean", "Semi-transparent blocks"],
 									["sloppy", "boolean", "Randomize timing"],
+									["rotation", "number", "Degrees to spin blocks (0)"],
+									["scale", "number", "Starting scale 0-1 (1)"],
+									["blur", "number", "Starting blur in px (0)"],
 								].map(([name, type, desc]) => (
 									<tr key={name} style={{ borderBottom: "1px solid #21262d" }}>
 										<td style={{ padding: "6px 8px 6px 0", fontFamily: "monospace", color: "#79c0ff" }}>

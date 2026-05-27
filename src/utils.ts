@@ -122,6 +122,9 @@ export function resolveOptions(
 		style?: "normal" | "rounded";
 		translucent?: boolean;
 		sloppy?: boolean;
+		rotation?: number;
+		scale?: number;
+		blur?: number;
 	},
 	w: number,
 	h: number,
@@ -135,6 +138,9 @@ export function resolveOptions(
 	const style = presetOverrides.style ?? props.style ?? "normal";
 	const translucent = presetOverrides.translucent ?? props.translucent ?? false;
 	const sloppy = presetOverrides.sloppy ?? props.sloppy ?? false;
+	const rotation = presetOverrides.rotation ?? props.rotation ?? 0;
+	const scale = presetOverrides.scale ?? props.scale ?? 1;
+	const blur = presetOverrides.blur ?? props.blur ?? 0;
 
 	xBlocks = typeof xBlocks !== "number" ? 3 : xBlocks < 1 ? 1 : xBlocks;
 	yBlocks = typeof yBlocks !== "number" ? 3 : yBlocks < 1 ? 1 : yBlocks;
@@ -155,5 +161,8 @@ export function resolveOptions(
 		style: style !== "rounded" ? "normal" : "rounded",
 		translucent: typeof translucent !== "boolean" ? false : translucent,
 		sloppy: typeof sloppy !== "boolean" ? false : sloppy,
+		rotation: typeof rotation !== "number" ? 0 : rotation,
+		scale: typeof scale !== "number" ? 1 : Math.max(0, Math.min(1, scale)),
+		blur: typeof blur !== "number" ? 0 : Math.max(0, blur),
 	};
 }
