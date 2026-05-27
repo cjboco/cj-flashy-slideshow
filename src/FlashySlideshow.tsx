@@ -233,14 +233,16 @@ export function FlashySlideshow({
 
 					const phase1Keyframes: Keyframe[] = [];
 
+					const blurVal = opts.blur > 0 ? `blur(${opts.blur}px)` : undefined;
+
 					if (blockRotation === 0) {
 						// Straight path
 						const startClip = computeClipInset(
 							b.startTop, b.startLeft, scaledSize, scaledSize, width, height, rounded,
 						);
 						phase1Keyframes.push(
-							{ clipPath: startClip, filter: `blur(${opts.blur}px)` },
-							{ clipPath: midClip, filter: "blur(0px)" },
+							{ clipPath: startClip, ...(blurVal && { filter: blurVal }) },
+							{ clipPath: midClip, ...(blurVal && { filter: blurVal }) },
 						);
 					} else {
 						// Spiral arc path from start to center
@@ -265,7 +267,7 @@ export function FlashySlideshow({
 							const clipY = cy - scaledSize / 2;
 							phase1Keyframes.push({
 								clipPath: computeClipInset(clipY, clipX, scaledSize, scaledSize, width, height, rounded),
-								filter: `blur(${opts.blur * (1 - t)}px)`,
+								...(blurVal && { filter: blurVal }),
 							});
 						}
 					}
@@ -299,10 +301,12 @@ export function FlashySlideshow({
 								{
 									clipPath: midClip,
 									opacity: String(b.opacity),
+									...(blurVal && { filter: blurVal }),
 								},
 								{
 									clipPath: expandedClip,
 									opacity: "1",
+									...(blurVal && { filter: "blur(0px)" }),
 								},
 							],
 							{ duration: phase2Duration, fill: "forwards" },
