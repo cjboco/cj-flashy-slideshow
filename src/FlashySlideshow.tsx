@@ -386,6 +386,7 @@ export function FlashySlideshow({
 								{
 									...finalProps,
 									opacity: "1",
+									...(blurVal && { filter: "blur(0px)" }),
 									offset: 1.0,
 								},
 							]
