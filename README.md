@@ -3,7 +3,7 @@
 A React component that gives your slideshows some flash-like transitions.
 
 [![npm version](https://img.shields.io/npm/v/cj-flashy-slideshow.svg)](https://www.npmjs.com/package/cj-flashy-slideshow)
-[![license](https://img.shields.io/npm/l/cj-flashy-slideshow.svg)](https://github.com/cjboco/CJ-Flashy-Slideshow/blob/master/LICENSE)
+[![license](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](https://github.com/cjboco/CJ-Flashy-Slideshow/blob/master/LICENSE)
 
 View the [online demo](https://cjboco.github.io/CJ-Flashy-Slideshow/).
 
@@ -107,4 +107,4 @@ type BlockStyle = "normal" | "rounded";
 
 ## License
 
-MIT — Copyright (c) Creative Juices Bo. Co. — Doug Jones ([cjboco.com](https://cjboco.com))
+BSD-3-Clause — Copyright (c) Creative Juices Bo. Co. — Doug Jones ([cjboco.com](https://cjboco.com))
