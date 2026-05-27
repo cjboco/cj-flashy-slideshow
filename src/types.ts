@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export type Direction =
 	| "top"
 	| "topleft"
@@ -34,7 +36,7 @@ export interface FlashySlideshowOptions {
 }
 
 export interface FlashySlideshowProps extends FlashySlideshowOptions {
-	images: string[];
+	children: ReactNode[];
 	width: number;
 	height: number;
 	className?: string;
