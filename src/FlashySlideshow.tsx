@@ -3,8 +3,10 @@ import { applyPreset } from "./presets";
 import type { BlockData, FlashySlideshowProps, ResolvedOptions } from "./types";
 import {
 	calculateStartPosition,
+	calculateWipeStaggerDelay,
 	createBlockData,
 	getRandomDirection,
+	isWipeDirection,
 	randomRange,
 	resolveOptions,
 } from "./utils";
@@ -123,7 +125,11 @@ export function FlashySlideshow({
 
 	const blockW = Math.ceil(width / opts.xBlocks);
 	const blockH = Math.ceil(height / opts.yBlocks);
-	const totalBlocks = opts.xBlocks * opts.yBlocks;
+	const wipeMode = isWipeDirection(opts.currentDirection);
+	const wipePad = wipeMode ? 1 : 0;
+	const gridXBlocks = opts.xBlocks + wipePad * 2;
+	const gridYBlocks = opts.yBlocks + wipePad * 2;
+	const totalBlocks = gridXBlocks * gridYBlocks;
 	const rounded = opts.style === "rounded";
 	const feathered = opts.feather > 0;
 
@@ -155,19 +161,25 @@ export function FlashySlideshow({
 	}, [feathered, opts.feather, rounded]);
 
 	// Build block data (memoized for stable reference)
+	// For wipe modes, extend the grid 1 cell outside each edge so the
+	// particle effect isn't cut off at the container border.
 	const blocks = useMemo(() => {
 		const result: BlockData[] = [];
-		for (let y = 0; y < opts.yBlocks; y++) {
-			for (let x = 0; x < opts.xBlocks; x++) {
+		for (let y = -wipePad; y < opts.yBlocks + wipePad; y++) {
+			for (let x = -wipePad; x < opts.xBlocks + wipePad; x++) {
 				result.push(createBlockData(x, y, blockW, blockH, opts, width, height));
 			}
 		}
 		return result;
-	}, [opts, blockW, blockH, width, height]);
+	}, [opts, blockW, blockH, width, height, wipePad]);
 
 	// Animation effect
 	useEffect(() => {
 		if (slideCount < 2) return;
+
+		const staggerTimers: ReturnType<typeof setTimeout>[] = [];
+		const isWipe = isWipeDirection(opts.currentDirection);
+		const wipeSpread = opts.speed * 2;
 
 		const state: AnimState = {
 			currentSlide: 0,
@@ -216,11 +228,12 @@ export function FlashySlideshow({
 				const el = blockEls[i];
 				if (!el) continue;
 
+				const initSize = isWipe ? 0 : opts.minBlockSize;
 				applyRegionStyle(el, getRegionProps(
-					b.startTop, b.startLeft, opts.minBlockSize, opts.minBlockSize,
+					b.startTop, b.startLeft, initSize, initSize,
 					width, height, rounded, feathered,
 				));
-				el.style.opacity = String(b.opacity);
+				el.style.opacity = isWipe ? "0" : String(b.opacity);
 				el.style.filter = opts.blur > 0 ? `blur(${opts.blur}px)` : "";
 			}
 
@@ -229,6 +242,8 @@ export function FlashySlideshow({
 
 		function animateBlocks() {
 			if (!state.mounted) return;
+			for (const t of staggerTimers) clearTimeout(t);
+			staggerTimers.length = 0;
 			state.completedBlocks = 0;
 			state.animating = true;
 
@@ -244,10 +259,14 @@ export function FlashySlideshow({
 
 				const blockEls = getBlockEls();
 
-				for (let i = 0; i < blocks.length; i++) {
+				function animateBlock(i: number) {
 					const b = blocks[i];
 					const el = blockEls[i];
-					if (!el) continue;
+					if (!el || !state.mounted) return;
+
+					if (isWipe) {
+						el.style.opacity = String(b.opacity);
+					}
 
 					const mbs = opts.minBlockSize;
 
@@ -434,6 +453,20 @@ export function FlashySlideshow({
 						};
 					};
 				}
+
+				for (let i = 0; i < blocks.length; i++) {
+					if (isWipe) {
+						const b = blocks[i];
+						const staggerDelay = calculateWipeStaggerDelay(
+							b.x, b.y, opts.xBlocks, opts.yBlocks,
+							opts.currentDirection, wipeSpread,
+						);
+						const timer = setTimeout(() => animateBlock(i), staggerDelay);
+						staggerTimers.push(timer);
+					} else {
+						animateBlock(i);
+					}
+				}
 			});
 		}
 
@@ -445,6 +478,8 @@ export function FlashySlideshow({
 		return () => {
 			state.mounted = false;
 			if (state.timer) clearTimeout(state.timer);
+			for (const t of staggerTimers) clearTimeout(t);
+			staggerTimers.length = 0;
 
 			const blockEls = getBlockEls();
 			for (const el of blockEls) {

@@ -23,12 +23,16 @@ const PRESETS: { value: Preset; label: string; description: string }[] = [
 	{ value: "dissolve", label: "Dissolve", description: "Soft fade-in with blur, no directional movement" },
 	{ value: "vortex", label: "Vortex", description: "Spinning blocks swirl in from all directions" },
 	{ value: "pixelate", label: "Pixelate", description: "Tiny blocks pop in at their grid positions" },
+	{ value: "wipe", label: "Wipe", description: "Classic wipe transition with flashy particle edge" },
+	{ value: "wipeDissolve", label: "Wipe Dissolve", description: "Soft wipe with blur and feathered particle edge" },
 ];
 
 const DIRECTIONS: Direction[] = [
 	"top", "topleft", "topright", "left",
 	"bottom", "bottomleft", "bottomright", "right",
 	"random", "none",
+	"wipeLeft", "wipeRight", "wipeTop", "wipeBottom",
+	"wipeTopLeft", "wipeTopRight", "wipeBottomLeft", "wipeBottomRight",
 ];
 
 type SlideType = "images" | "html" | "mixed";

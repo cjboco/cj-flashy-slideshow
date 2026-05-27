@@ -126,6 +126,32 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 				randomize: true,
 				delay: 2000,
 			};
+		case "wipe":
+			return {
+				xBlocks: Math.round(w / 50),
+				yBlocks: Math.round(h / 50),
+				minBlockSize: 0,
+				direction: "wipeLeft",
+				style: "normal",
+				translucent: false,
+				randomize: true,
+				randomness: 30,
+				delay: 3000,
+			};
+		case "wipeDissolve":
+			return {
+				xBlocks: Math.round(w / 60),
+				yBlocks: Math.round(h / 60),
+				minBlockSize: 0,
+				direction: "wipeLeft",
+				style: "rounded",
+				translucent: true,
+				randomize: true,
+				randomness: 60,
+				blur: 4,
+				feather: 15,
+				delay: 3000,
+			};
 		default:
 			return {
 				xBlocks: Math.round(w / 100),

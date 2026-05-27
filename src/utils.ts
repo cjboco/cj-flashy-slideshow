@@ -11,6 +11,70 @@ const DIRECTIONS: Direction[] = [
 	"right",
 ];
 
+const WIPE_DIRECTIONS: Direction[] = [
+	"wipeLeft",
+	"wipeRight",
+	"wipeTop",
+	"wipeBottom",
+	"wipeTopLeft",
+	"wipeTopRight",
+	"wipeBottomLeft",
+	"wipeBottomRight",
+];
+
+export function isWipeDirection(dir: Direction): boolean {
+	return (WIPE_DIRECTIONS as string[]).includes(dir);
+}
+
+export function getWipeFlightDirection(_dir: Direction): Direction {
+	return "none";
+}
+
+export function calculateWipeStaggerDelay(
+	x: number,
+	y: number,
+	xBlocks: number,
+	yBlocks: number,
+	dir: Direction,
+	totalSpread: number,
+): number {
+	let progress: number;
+	const maxX = Math.max(1, xBlocks - 1);
+	const maxY = Math.max(1, yBlocks - 1);
+	const maxDiag = Math.max(1, maxX + maxY);
+
+	switch (dir) {
+		case "wipeLeft":
+			progress = x / maxX;
+			break;
+		case "wipeRight":
+			progress = (maxX - x) / maxX;
+			break;
+		case "wipeTop":
+			progress = y / maxY;
+			break;
+		case "wipeBottom":
+			progress = (maxY - y) / maxY;
+			break;
+		case "wipeTopLeft":
+			progress = (x + y) / maxDiag;
+			break;
+		case "wipeTopRight":
+			progress = ((maxX - x) + y) / maxDiag;
+			break;
+		case "wipeBottomLeft":
+			progress = (x + (maxY - y)) / maxDiag;
+			break;
+		case "wipeBottomRight":
+			progress = ((maxX - x) + (maxY - y)) / maxDiag;
+			break;
+		default:
+			progress = 0;
+	}
+
+	return progress * totalSpread;
+}
+
 export function randomRange(a: number, b: number, decimals?: number): number {
 	const v = a + Math.random() * (b - a);
 	return decimals === undefined ? Math.round(v) : Number.parseFloat(v.toFixed(decimals));
@@ -88,7 +152,11 @@ export function createBlockData(
 	w: number,
 	h: number,
 ): BlockData {
-	const dir = opts.direction === "random" ? getRandomDirection() : opts.currentDirection;
+	const dir = opts.direction === "random"
+		? getRandomDirection()
+		: isWipeDirection(opts.currentDirection)
+			? getWipeFlightDirection(opts.currentDirection)
+			: opts.currentDirection;
 	const { startTop, startLeft } = calculateStartPosition(
 		dir,
 		x,

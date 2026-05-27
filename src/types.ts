@@ -10,7 +10,15 @@ export type Direction =
 	| "bottomright"
 	| "right"
 	| "random"
-	| "none";
+	| "none"
+	| "wipeLeft"
+	| "wipeRight"
+	| "wipeTop"
+	| "wipeBottom"
+	| "wipeTopLeft"
+	| "wipeTopRight"
+	| "wipeBottomLeft"
+	| "wipeBottomRight";
 
 export type BlockStyle = "normal" | "rounded";
 
@@ -26,7 +34,9 @@ export type Preset =
 	| "cascade"
 	| "dissolve"
 	| "vortex"
-	| "pixelate";
+	| "pixelate"
+	| "wipe"
+	| "wipeDissolve";
 
 export interface FlashySlideshowOptions {
 	preset?: Preset;
