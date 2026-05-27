@@ -86,7 +86,9 @@ You can freely mix images and HTML slides:
 | `direction`     | `Direction`               | varies     | Direction blocks enter from                          |
 | `style`         | `BlockStyle`              | `"normal"` | Block shape (`"normal"` or `"rounded"`)              |
 | `translucent`   | `boolean`                 | `false`    | Semi-transparent blocks during transition            |
-| `sloppy`        | `boolean`                 | `false`    | Randomize block timing and positioning               |
+| `speed`         | `number`                  | `650`      | Base duration per animation phase in ms (100-2500)   |
+| `randomize`     | `boolean`                 | `false`    | Randomize block timing and positioning               |
+| `randomness`    | `number`                  | `50`       | Timing variance percentage when randomize is on (0-100) |
 | `xBlocks`       | `number`                  | varies     | Number of horizontal blocks                          |
 | `yBlocks`       | `number`                  | varies     | Number of vertical blocks                            |
 | `minBlockSize`  | `number`                  | varies     | Minimum block size in pixels                         |

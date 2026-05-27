@@ -9,7 +9,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 				minBlockSize: Math.round(w / 100) * 25,
 				direction: "random",
 				translucent: true,
-				sloppy: true,
+				randomize: true,
 				delay: 3000,
 			};
 		case "rain":
@@ -20,7 +20,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 				style: "rounded",
 				direction: "top",
 				translucent: false,
-				sloppy: true,
+				randomize: true,
 				delay: 1250,
 			};
 		case "blinds":
@@ -31,7 +31,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 				style: "normal",
 				direction: "top",
 				translucent: false,
-				sloppy: false,
+				randomize: false,
 				delay: 3000,
 			};
 		case "blinds2":
@@ -42,7 +42,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 				style: "normal",
 				direction: "top",
 				translucent: false,
-				sloppy: false,
+				randomize: false,
 				delay: 3000,
 			};
 		case "transport":
@@ -53,7 +53,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 				style: "normal",
 				direction: "top",
 				translucent: true,
-				sloppy: true,
+				randomize: true,
 				delay: 1250,
 			};
 		case "transport2":
@@ -64,7 +64,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 				style: "normal",
 				direction: "top",
 				translucent: true,
-				sloppy: true,
+				randomize: true,
 				delay: 1250,
 			};
 		case "spiral":
@@ -75,7 +75,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 				direction: "random",
 				style: "rounded",
 				translucent: true,
-				sloppy: true,
+				randomize: true,
 				rotation: 360,
 				blur: 3,
 				delay: 4000,
@@ -87,7 +87,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 				minBlockSize: 5,
 				direction: "top",
 				translucent: true,
-				sloppy: true,
+				randomize: true,
 				rotation: 180,
 				blur: 2,
 				delay: 2500,
@@ -99,7 +99,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 				minBlockSize: 2,
 				direction: "none",
 				translucent: true,
-				sloppy: true,
+				randomize: true,
 				blur: 8,
 				feather: 20,
 				delay: 3000,
@@ -112,7 +112,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 				direction: "random",
 				style: "rounded",
 				translucent: true,
-				sloppy: true,
+				randomize: true,
 				rotation: 360,
 				blur: 3,
 				delay: 3000,
@@ -123,7 +123,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 				yBlocks: Math.round(h / 20),
 				minBlockSize: 0,
 				direction: "none",
-				sloppy: true,
+				randomize: true,
 				delay: 2000,
 			};
 		default:
@@ -134,7 +134,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 				style: "normal",
 				direction: "left",
 				translucent: false,
-				sloppy: false,
+				randomize: false,
 				delay: 3000,
 			};
 	}

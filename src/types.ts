@@ -37,7 +37,9 @@ export interface FlashySlideshowOptions {
 	direction?: Direction;
 	style?: BlockStyle;
 	translucent?: boolean;
-	sloppy?: boolean;
+	randomize?: boolean;
+	speed?: number;
+	randomness?: number;
 	rotation?: number;
 	blur?: number;
 	feather?: number;
@@ -70,7 +72,9 @@ export interface ResolvedOptions {
 	currentDirection: Direction;
 	style: BlockStyle;
 	translucent: boolean;
-	sloppy: boolean;
+	randomize: boolean;
+	speed: number;
+	randomness: number;
 	rotation: number;
 	blur: number;
 	feather: number;

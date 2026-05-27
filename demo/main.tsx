@@ -68,7 +68,9 @@ interface Settings {
 	direction: Direction;
 	style: BlockStyle;
 	translucent: boolean;
-	sloppy: boolean;
+	randomize: boolean;
+	speed: number;
+	randomness: number;
 	rotation: number;
 	rotationEnabled: boolean;
 	blur: number;
@@ -80,7 +82,7 @@ interface Settings {
 const PROP_DEFAULTS = {
 	xBlocks: 12, yBlocks: 3, minBlockSize: 3, delay: 3000,
 	direction: "left" as Direction, style: "normal" as BlockStyle,
-	translucent: false, sloppy: false,
+	translucent: false, randomize: false, speed: 650, randomness: 50,
 	rotation: 180, rotationEnabled: false,
 	blur: 4, blurEnabled: false,
 	feather: 15, featherEnabled: false,
@@ -97,7 +99,9 @@ function resolvePresetValues(preset: Preset): Omit<Settings, "usePreset" | "pres
 		direction: resolved.direction,
 		style: resolved.style,
 		translucent: resolved.translucent,
-		sloppy: resolved.sloppy,
+		randomize: resolved.randomize,
+		speed: resolved.speed,
+		randomness: resolved.randomness,
 		rotation: resolved.rotation !== 0 ? resolved.rotation : 180,
 		rotationEnabled: resolved.rotation !== 0,
 		blur: resolved.blur !== 0 ? resolved.blur : 4,
@@ -120,7 +124,9 @@ function settingsToUrl(s: Settings): string {
 	p.set("dir", s.direction);
 	p.set("sty", s.style);
 	if (s.translucent) p.set("tr", "1");
-	if (s.sloppy) p.set("sl", "1");
+	if (s.randomize) p.set("rnd", "1");
+	p.set("spd", String(s.speed));
+	if (s.randomize) p.set("rns", String(s.randomness));
 	if (s.rotationEnabled) p.set("rot", String(s.rotation));
 	if (s.blurEnabled) p.set("bl", String(s.blur));
 	if (s.featherEnabled) p.set("fe", String(s.feather));
@@ -151,7 +157,9 @@ function parseUrlSettings(): Settings {
 		direction: p.has("dir") ? (p.get("dir") as Direction) : base.direction,
 		style: p.has("sty") ? (p.get("sty") as BlockStyle) : base.style,
 		translucent: p.has("tr") ? p.get("tr") === "1" : base.translucent,
-		sloppy: p.has("sl") ? p.get("sl") === "1" : base.sloppy,
+		randomize: p.has("rnd") ? p.get("rnd") === "1" : base.randomize,
+		speed: p.has("spd") ? Number(p.get("spd")) : base.speed,
+		randomness: p.has("rns") ? Number(p.get("rns")) : base.randomness,
 		rotation: p.has("rot") ? Number(p.get("rot")) : base.rotation,
 		rotationEnabled: p.has("rot"),
 		blur: p.has("bl") ? Number(p.get("bl")) : base.blur,
@@ -312,7 +320,9 @@ function buildCodeExample(s: Settings): string {
 	if (s.direction !== "left") lines.push(`  direction="${s.direction}"`);
 	if (s.style !== "normal") lines.push(`  style="${s.style}"`);
 	if (s.translucent) lines.push("  translucent");
-	if (s.sloppy) lines.push("  sloppy");
+	if (s.randomize) lines.push("  randomize");
+	if (s.speed !== 650) lines.push(`  speed={${s.speed}}`);
+	if (s.randomize && s.randomness !== 50) lines.push(`  randomness={${s.randomness}}`);
 	if (s.rotationEnabled) lines.push(`  rotation={${s.rotation}}`);
 	if (s.blurEnabled) lines.push(`  blur={${s.blur}}`);
 	if (s.featherEnabled) lines.push(`  feather={${s.feather}}`);
@@ -471,7 +481,9 @@ function App() {
 								direction={settings.direction}
 								style={settings.style}
 								translucent={settings.translucent}
-								sloppy={settings.sloppy}
+								randomize={settings.randomize}
+								speed={settings.speed}
+								randomness={settings.randomness}
 								rotation={settings.rotationEnabled ? settings.rotation : 0}
 								blur={settings.blurEnabled ? settings.blur : 0}
 								feather={settings.featherEnabled ? settings.feather : 0}
@@ -543,16 +555,28 @@ function App() {
 								{ value: "rounded" as BlockStyle, label: "rounded" },
 							]}
 						/>
+						<RangeControl
+							label="speed" value={settings.speed}
+							onChange={(v) => update("speed", v)}
+							min={100} max={2500} step={50} suffix="ms"
+						/>
 						<div style={{ display: "flex", gap: "20px", padding: "4px 0" }}>
 							<label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "12px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "#8b949e" }}>
 								<input type="checkbox" checked={settings.translucent} onChange={(e) => update("translucent", e.target.checked)} style={{ accentColor: "#388bfd", cursor: "pointer", margin: 0 }} />
 								translucent
 							</label>
 							<label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "12px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "#8b949e" }}>
-								<input type="checkbox" checked={settings.sloppy} onChange={(e) => update("sloppy", e.target.checked)} style={{ accentColor: "#388bfd", cursor: "pointer", margin: 0 }} />
-								sloppy
+								<input type="checkbox" checked={settings.randomize} onChange={(e) => update("randomize", e.target.checked)} style={{ accentColor: "#388bfd", cursor: "pointer", margin: 0 }} />
+								randomize
 							</label>
 						</div>
+						{settings.randomize && (
+							<RangeControl
+								label="randomness" value={settings.randomness}
+								onChange={(v) => update("randomness", v)}
+								min={0} max={100} step={5} suffix="%"
+							/>
+						)}
 						<div style={{ borderTop: "1px solid #21262d", margin: "2px 0" }} />
 						<OptionalRangeControl
 							label="rotation" value={settings.rotation}

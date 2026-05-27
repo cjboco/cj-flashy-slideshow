@@ -84,7 +84,9 @@ export function FlashySlideshow({
 	direction,
 	style,
 	translucent,
-	sloppy,
+	randomize,
+	speed,
+	randomness,
 	rotation,
 	blur,
 	feather,
@@ -112,12 +114,12 @@ export function FlashySlideshow({
 	const opts = useMemo(() => {
 		const presetOverrides = preset ? applyPreset(preset, width, height) : {};
 		return resolveOptions(
-			{ preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, sloppy, rotation, blur, feather },
+			{ preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, randomize, speed, randomness, rotation, blur, feather },
 			width,
 			height,
 			presetOverrides,
 		);
-	}, [preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, sloppy, rotation, blur, feather, width, height]);
+	}, [preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, randomize, speed, randomness, rotation, blur, feather, width, height]);
 
 	const blockW = Math.ceil(width / opts.xBlocks);
 	const blockH = Math.ceil(height / opts.yBlocks);
@@ -253,15 +255,20 @@ export function FlashySlideshow({
 						blockW * b.x +
 						blockW / 2 -
 						mbs / 2 +
-						(opts.sloppy ? randomRange(0, mbs) - mbs / 2 : 0);
+						(opts.randomize ? randomRange(0, mbs) - mbs / 2 : 0);
 					const midCenterY =
 						blockH * b.y +
 						blockH / 2 -
 						mbs / 2 +
-						(opts.sloppy ? randomRange(0, mbs) - mbs / 2 : 0);
+						(opts.randomize ? randomRange(0, mbs) - mbs / 2 : 0);
 
-					const phase1Duration = opts.sloppy ? randomRange(350, 1250) : 650;
-					const phase2Duration = opts.sloppy ? randomRange(250, 850) : 650;
+					const variance = opts.randomize ? opts.speed * opts.randomness / 100 : 0;
+					const phase1Duration = opts.randomize
+						? randomRange(Math.max(50, opts.speed - variance), opts.speed + variance)
+						: opts.speed;
+					const phase2Duration = opts.randomize
+						? randomRange(Math.max(50, opts.speed - variance), opts.speed + variance)
+						: opts.speed;
 
 					const midProps = getRegionProps(
 						midCenterY, midCenterX, mbs, mbs,
@@ -269,7 +276,7 @@ export function FlashySlideshow({
 					);
 
 					// Build phase 1 keyframes — spiral path when rotation > 0
-					const blockRotation = opts.sloppy && opts.rotation !== 0
+					const blockRotation = opts.randomize && opts.rotation !== 0
 						? opts.rotation + randomRange(-180, 180)
 						: opts.rotation;
 
