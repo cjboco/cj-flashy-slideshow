@@ -248,7 +248,7 @@ export function FlashySlideshow({
 							blockH * 2,
 							width,
 							height,
-							false,
+							rounded,
 						);
 
 						const phase2 = el.animate(
