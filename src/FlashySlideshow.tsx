@@ -32,16 +32,17 @@ function computeClipInset(
 	h: number,
 	rounded: boolean,
 ): string {
+	if (rounded) {
+		const cx = left + bWidth / 2;
+		const cy = top + bHeight / 2;
+		const radius = Math.min(bWidth, bHeight) / 2;
+		return `circle(${radius}px at ${cx}px ${cy}px)`;
+	}
+
 	const insetTop = Math.max(0, top);
 	const insetLeft = Math.max(0, left);
 	const insetBottom = Math.max(0, h - (top + bHeight));
 	const insetRight = Math.max(0, w - (left + bWidth));
-
-	if (rounded) {
-		const radius = Math.min(bWidth, bHeight) / 2;
-		return `inset(${insetTop}px ${insetRight}px ${insetBottom}px ${insetLeft}px round ${radius}px)`;
-	}
-
 	return `inset(${insetTop}px ${insetRight}px ${insetBottom}px ${insetLeft}px)`;
 }
 
@@ -241,15 +242,19 @@ export function FlashySlideshow({
 						if (!state.mounted) return;
 
 						// Phase 2: expand clip from small at center to full cell
-						const expandedClip = computeClipInset(
-							b.endTop,
-							b.endLeft,
-							blockW * 2,
-							blockH * 2,
-							width,
-							height,
-							rounded,
-						);
+						let expandedClip: string;
+						if (rounded) {
+							const cx = blockW * b.x + blockW / 2;
+							const cy = blockH * b.y + blockH / 2;
+							const bigR = Math.ceil(Math.hypot(width, height));
+							expandedClip = computeClipInset(
+								cy - bigR, cx - bigR, bigR * 2, bigR * 2, width, height, true,
+							);
+						} else {
+							expandedClip = computeClipInset(
+								b.endTop, b.endLeft, blockW * 2, blockH * 2, width, height, false,
+							);
+						}
 
 						const phase2 = el.animate(
 							[
