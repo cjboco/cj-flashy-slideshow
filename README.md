@@ -3,9 +3,9 @@
 A React component that gives your slideshows some flash-like transitions.
 
 [![npm version](https://img.shields.io/npm/v/cj-flashy-slideshow.svg)](https://www.npmjs.com/package/cj-flashy-slideshow)
-[![license](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](https://github.com/cjboco/CJ-Flashy-Slideshow/blob/master/LICENSE)
+[![license](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](https://github.com/cjboco/cj-flashy-slideshow/blob/master/LICENSE)
 
-View the [online demo](https://cjboco.github.io/CJ-Flashy-Slideshow/).
+View the [online demo](https://cjboco.github.io/cj-flashy-slideshow/).
 
 ## Install
 
@@ -41,10 +41,20 @@ Slides don't have to be images. Any React node works:
 
 ```tsx
 <FlashySlideshow width={640} height={400} preset="cubism">
-  <div style={{ background: "linear-gradient(135deg, #667eea, #764ba2)", color: "#fff" }}>
+  <div
+    style={{
+      background: "linear-gradient(135deg, #667eea, #764ba2)",
+      color: "#fff",
+    }}
+  >
     <h2>Welcome</h2>
   </div>
-  <div style={{ background: "linear-gradient(135deg, #f093fb, #f5576c)", color: "#fff" }}>
+  <div
+    style={{
+      background: "linear-gradient(135deg, #f093fb, #f5576c)",
+      color: "#fff",
+    }}
+  >
     <h2>Beautiful Transitions</h2>
   </div>
 </FlashySlideshow>
@@ -66,41 +76,58 @@ You can freely mix images and HTML slides:
 
 ## Props
 
-| Prop | Type | Default | Description |
-| --- | --- | --- | --- |
-| `width` | `number` | *required* | Width of the slideshow in pixels |
-| `height` | `number` | *required* | Height of the slideshow in pixels |
-| `children` | `ReactNode[]` | *required* | Slide content (each child is one slide) |
-| `preset` | `Preset` | `"bricks"` | Animation preset name |
-| `delay` | `number` | varies | Milliseconds between transitions |
-| `direction` | `Direction` | varies | Direction blocks enter from |
-| `style` | `BlockStyle` | `"normal"` | Block shape (`"normal"` or `"rounded"`) |
-| `translucent` | `boolean` | `false` | Semi-transparent blocks during transition |
-| `sloppy` | `boolean` | `false` | Randomize block timing and positioning |
-| `xBlocks` | `number` | varies | Number of horizontal blocks |
-| `yBlocks` | `number` | varies | Number of vertical blocks |
-| `minBlockSize` | `number` | varies | Minimum block size in pixels |
-| `className` | `string` | — | CSS class for the container |
-| `onSlideChange` | `(index: number) => void` | — | Callback when the active slide changes |
+| Prop            | Type                      | Default    | Description                               |
+| --------------- | ------------------------- | ---------- | ----------------------------------------- |
+| `width`         | `number`                  | _required_ | Width of the slideshow in pixels          |
+| `height`        | `number`                  | _required_ | Height of the slideshow in pixels         |
+| `children`      | `ReactNode[]`             | _required_ | Slide content (each child is one slide)   |
+| `preset`        | `Preset`                  | `"bricks"` | Animation preset name                     |
+| `delay`         | `number`                  | varies     | Milliseconds between transitions          |
+| `direction`     | `Direction`               | varies     | Direction blocks enter from               |
+| `style`         | `BlockStyle`              | `"normal"` | Block shape (`"normal"` or `"rounded"`)   |
+| `translucent`   | `boolean`                 | `false`    | Semi-transparent blocks during transition |
+| `sloppy`        | `boolean`                 | `false`    | Randomize block timing and positioning    |
+| `xBlocks`       | `number`                  | varies     | Number of horizontal blocks               |
+| `yBlocks`       | `number`                  | varies     | Number of vertical blocks                 |
+| `minBlockSize`  | `number`                  | varies     | Minimum block size in pixels              |
+| `className`     | `string`                  | —          | CSS class for the container               |
+| `onSlideChange` | `(index: number) => void` | —          | Callback when the active slide changes    |
 
 ## Presets
 
-| Preset | Description |
-| --- | --- |
-| `bricks` | Little bricks drop in from the left and expand to reveal the next slide. *(default)* |
-| `cubism` | Random transparent blocks fly in from all sides. |
-| `rain` | Small rounded drops fall from the top. |
-| `blinds` | Horizontal bands expand to reveal the next slide. |
-| `blinds2` | Vertical bands expand to reveal the next slide. |
-| `transport` | Translucent horizontal strips slide in. |
-| `transport2` | Translucent vertical strips slide in. |
+| Preset       | Description                                                                          |
+| ------------ | ------------------------------------------------------------------------------------ |
+| `bricks`     | Little bricks drop in from the left and expand to reveal the next slide. _(default)_ |
+| `cubism`     | Random transparent blocks fly in from all sides.                                     |
+| `rain`       | Small rounded drops fall from the top.                                               |
+| `blinds`     | Horizontal bands expand to reveal the next slide.                                    |
+| `blinds2`    | Vertical bands expand to reveal the next slide.                                      |
+| `transport`  | Translucent horizontal strips slide in.                                              |
+| `transport2` | Translucent vertical strips slide in.                                                |
 
 ## Types
 
 ```ts
-type Preset = "bricks" | "cubism" | "rain" | "blinds" | "blinds2" | "transport" | "transport2";
+type Preset =
+  | "bricks"
+  | "cubism"
+  | "rain"
+  | "blinds"
+  | "blinds2"
+  | "transport"
+  | "transport2";
 
-type Direction = "top" | "topleft" | "topright" | "left" | "bottom" | "bottomleft" | "bottomright" | "right" | "random" | "none";
+type Direction =
+  | "top"
+  | "topleft"
+  | "topright"
+  | "left"
+  | "bottom"
+  | "bottomleft"
+  | "bottomright"
+  | "right"
+  | "random"
+  | "none";
 
 type BlockStyle = "normal" | "rounded";
 ```

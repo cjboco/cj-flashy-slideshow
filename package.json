@@ -27,7 +27,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cjboco/CJ-Flashy-Slideshow.git"
+    "url": "git+https://github.com/cjboco/cj-flashy-slideshow.git"
   },
   "keywords": [
     "react",
@@ -39,9 +39,9 @@
   "author": "Doug Jones",
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/cjboco/CJ-Flashy-Slideshow/issues"
+    "url": "https://github.com/cjboco/cj-flashy-slideshow/issues"
   },
-  "homepage": "https://cjboco.github.io/CJ-Flashy-Slideshow/",
+  "homepage": "https://cjboco.github.io/cj-flashy-slideshow/",
   "peerDependencies": {
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0"

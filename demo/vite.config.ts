@@ -4,7 +4,7 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   root: "demo",
-  base: "/CJ-Flashy-Slideshow/",
+  base: "/cj-flashy-slideshow/",
   build: {
     outDir: "../demo-dist",
     emptyOutDir: true,
