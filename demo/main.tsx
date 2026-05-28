@@ -73,12 +73,17 @@ interface Settings {
 	style: BlockStyle;
 	translucent: boolean;
 	randomize: boolean;
-	speed: number;
 	randomness: number;
-	rotation: number;
-	rotationEnabled: boolean;
-	blur: number;
-	blurEnabled: boolean;
+	pathSpeed: number;
+	pathRotation: number;
+	pathRotationEnabled: boolean;
+	pathBlur: number;
+	pathBlurEnabled: boolean;
+	tileSpeed: number;
+	tileRotation: number;
+	tileRotationEnabled: boolean;
+	tileBlur: number;
+	tileBlurEnabled: boolean;
 	feather: number;
 	featherEnabled: boolean;
 }
@@ -86,9 +91,13 @@ interface Settings {
 const PROP_DEFAULTS = {
 	xBlocks: 12, yBlocks: 3, minBlockSize: 3, delay: 3000,
 	direction: "left" as Direction, style: "normal" as BlockStyle,
-	translucent: false, randomize: false, speed: 650, randomness: 50,
-	rotation: 180, rotationEnabled: false,
-	blur: 4, blurEnabled: false,
+	translucent: false, randomize: false, randomness: 50,
+	pathSpeed: 650,
+	pathRotation: 180, pathRotationEnabled: false,
+	pathBlur: 4, pathBlurEnabled: false,
+	tileSpeed: 650,
+	tileRotation: 360, tileRotationEnabled: false,
+	tileBlur: 4, tileBlurEnabled: false,
 	feather: 15, featherEnabled: false,
 };
 
@@ -104,12 +113,17 @@ function resolvePresetValues(preset: Preset): Omit<Settings, "usePreset" | "pres
 		style: resolved.style,
 		translucent: resolved.translucent,
 		randomize: resolved.randomize,
-		speed: resolved.speed,
 		randomness: resolved.randomness,
-		rotation: resolved.rotation !== 0 ? resolved.rotation : 180,
-		rotationEnabled: resolved.rotation !== 0,
-		blur: resolved.blur !== 0 ? resolved.blur : 4,
-		blurEnabled: resolved.blur !== 0,
+		pathSpeed: resolved.pathSpeed,
+		pathRotation: resolved.pathRotation !== 0 ? resolved.pathRotation : 180,
+		pathRotationEnabled: resolved.pathRotation !== 0,
+		pathBlur: resolved.pathBlur !== 0 ? resolved.pathBlur : 4,
+		pathBlurEnabled: resolved.pathBlur !== 0,
+		tileSpeed: resolved.tileSpeed,
+		tileRotation: resolved.tileRotation !== 0 ? resolved.tileRotation : 360,
+		tileRotationEnabled: resolved.tileRotation !== 0,
+		tileBlur: resolved.tileBlur !== 0 ? resolved.tileBlur : 4,
+		tileBlurEnabled: resolved.tileBlur !== 0,
 		feather: resolved.feather !== 0 ? resolved.feather : 15,
 		featherEnabled: resolved.feather !== 0,
 	};
@@ -129,10 +143,13 @@ function settingsToUrl(s: Settings): string {
 	p.set("sty", s.style);
 	if (s.translucent) p.set("tr", "1");
 	if (s.randomize) p.set("rnd", "1");
-	p.set("spd", String(s.speed));
+	p.set("ps", String(s.pathSpeed));
+	p.set("ts", String(s.tileSpeed));
 	if (s.randomize) p.set("rns", String(s.randomness));
-	if (s.rotationEnabled) p.set("rot", String(s.rotation));
-	if (s.blurEnabled) p.set("bl", String(s.blur));
+	if (s.pathRotationEnabled) p.set("prot", String(s.pathRotation));
+	if (s.pathBlurEnabled) p.set("pbl", String(s.pathBlur));
+	if (s.tileRotationEnabled) p.set("trot", String(s.tileRotation));
+	if (s.tileBlurEnabled) p.set("tbl", String(s.tileBlur));
 	if (s.featherEnabled) p.set("fe", String(s.feather));
 	const qs = p.toString();
 	return qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
@@ -162,12 +179,17 @@ function parseUrlSettings(): Settings {
 		style: p.has("sty") ? (p.get("sty") as BlockStyle) : base.style,
 		translucent: p.has("tr") ? p.get("tr") === "1" : base.translucent,
 		randomize: p.has("rnd") ? p.get("rnd") === "1" : base.randomize,
-		speed: p.has("spd") ? Number(p.get("spd")) : base.speed,
 		randomness: p.has("rns") ? Number(p.get("rns")) : base.randomness,
-		rotation: p.has("rot") ? Number(p.get("rot")) : base.rotation,
-		rotationEnabled: p.has("rot"),
-		blur: p.has("bl") ? Number(p.get("bl")) : base.blur,
-		blurEnabled: p.has("bl"),
+		pathSpeed: p.has("ps") ? Number(p.get("ps")) : base.pathSpeed,
+		pathRotation: p.has("prot") ? Number(p.get("prot")) : base.pathRotation,
+		pathRotationEnabled: p.has("prot"),
+		pathBlur: p.has("pbl") ? Number(p.get("pbl")) : base.pathBlur,
+		pathBlurEnabled: p.has("pbl"),
+		tileSpeed: p.has("ts") ? Number(p.get("ts")) : base.tileSpeed,
+		tileRotation: p.has("trot") ? Number(p.get("trot")) : base.tileRotation,
+		tileRotationEnabled: p.has("trot"),
+		tileBlur: p.has("tbl") ? Number(p.get("tbl")) : base.tileBlur,
+		tileBlurEnabled: p.has("tbl"),
 		feather: p.has("fe") ? Number(p.get("fe")) : base.feather,
 		featherEnabled: p.has("fe"),
 	};
@@ -202,6 +224,15 @@ const selectStyle: React.CSSProperties = {
 		"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238b949e' viewBox='0 0 16 16'%3E%3Cpath d='M4.427 7.427l3.396 3.396a.25.25 0 00.354 0l3.396-3.396A.25.25 0 0011.396 7H4.604a.25.25 0 00-.177.427z'/%3E%3C/svg%3E\")",
 	backgroundRepeat: "no-repeat",
 	backgroundPosition: "right 8px center",
+};
+
+const sectionLabelStyle: React.CSSProperties = {
+	fontSize: "10px",
+	fontWeight: 700,
+	textTransform: "uppercase",
+	letterSpacing: "0.08em",
+	color: "#388bfd",
+	marginBottom: "4px",
 };
 
 // --- Control components ---
@@ -325,10 +356,13 @@ function buildCodeExample(s: Settings): string {
 	if (s.style !== "normal") lines.push(`  style="${s.style}"`);
 	if (s.translucent) lines.push("  translucent");
 	if (s.randomize) lines.push("  randomize");
-	if (s.speed !== 650) lines.push(`  speed={${s.speed}}`);
 	if (s.randomize && s.randomness !== 50) lines.push(`  randomness={${s.randomness}}`);
-	if (s.rotationEnabled) lines.push(`  rotation={${s.rotation}}`);
-	if (s.blurEnabled) lines.push(`  blur={${s.blur}}`);
+	if (s.pathSpeed !== 650) lines.push(`  pathSpeed={${s.pathSpeed}}`);
+	if (s.pathRotationEnabled) lines.push(`  pathRotation={${s.pathRotation}}`);
+	if (s.pathBlurEnabled) lines.push(`  pathBlur={${s.pathBlur}}`);
+	if (s.tileSpeed !== 650) lines.push(`  tileSpeed={${s.tileSpeed}}`);
+	if (s.tileRotationEnabled) lines.push(`  tileRotation={${s.tileRotation}}`);
+	if (s.tileBlurEnabled) lines.push(`  tileBlur={${s.tileBlur}}`);
 	if (s.featherEnabled) lines.push(`  feather={${s.feather}}`);
 	return `<FlashySlideshow\n${lines.join("\n")}\n>\n  {/* slides */}\n</FlashySlideshow>`;
 }
@@ -360,7 +394,8 @@ function App() {
 		}
 	}, []);
 
-	const toggleOptional = useCallback((prop: "rotation" | "blur" | "feather", on: boolean) => {
+	type ToggleProp = "pathRotation" | "pathBlur" | "tileRotation" | "tileBlur" | "feather";
+	const toggleOptional = useCallback((prop: ToggleProp, on: boolean) => {
 		setSettings((prev) => {
 			const enabledKey = `${prop}Enabled` as keyof Settings;
 			return { ...prev, [enabledKey]: on, usePreset: false };
@@ -486,10 +521,13 @@ function App() {
 								style={settings.style}
 								translucent={settings.translucent}
 								randomize={settings.randomize}
-								speed={settings.speed}
 								randomness={settings.randomness}
-								rotation={settings.rotationEnabled ? settings.rotation : 0}
-								blur={settings.blurEnabled ? settings.blur : 0}
+								pathSpeed={settings.pathSpeed}
+								pathRotation={settings.pathRotationEnabled ? settings.pathRotation : 0}
+								pathBlur={settings.pathBlurEnabled ? settings.pathBlur : 0}
+								tileSpeed={settings.tileSpeed}
+								tileRotation={settings.tileRotationEnabled ? settings.tileRotation : 0}
+								tileBlur={settings.tileBlurEnabled ? settings.tileBlur : 0}
 								feather={settings.featherEnabled ? settings.feather : 0}
 								onSlideChange={setSlideIndex}
 							>
@@ -526,6 +564,7 @@ function App() {
 							gap: "12px",
 						}}
 					>
+						{/* General controls */}
 						<RangeControl
 							label="xBlocks" value={settings.xBlocks}
 							onChange={(v) => update("xBlocks", v)}
@@ -559,11 +598,6 @@ function App() {
 								{ value: "rounded" as BlockStyle, label: "rounded" },
 							]}
 						/>
-						<RangeControl
-							label="speed" value={settings.speed}
-							onChange={(v) => update("speed", v)}
-							min={100} max={2500} step={50} suffix="ms"
-						/>
 						<div style={{ display: "flex", gap: "20px", padding: "4px 0" }}>
 							<label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "12px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "#8b949e" }}>
 								<input type="checkbox" checked={settings.translucent} onChange={(e) => update("translucent", e.target.checked)} style={{ accentColor: "#388bfd", cursor: "pointer", margin: 0 }} />
@@ -581,21 +615,57 @@ function App() {
 								min={0} max={100} step={5} suffix="%"
 							/>
 						)}
-						<div style={{ borderTop: "1px solid #21262d", margin: "2px 0" }} />
+
+						{/* Path controls */}
+						<div style={{ borderTop: "1px solid #21262d", margin: "2px 0", paddingTop: "8px" }}>
+							<div style={sectionLabelStyle}>Path — how blocks fly in</div>
+						</div>
+						<RangeControl
+							label="pathSpeed" value={settings.pathSpeed}
+							onChange={(v) => update("pathSpeed", v)}
+							min={100} max={2500} step={50} suffix="ms"
+						/>
 						<OptionalRangeControl
-							label="rotation" value={settings.rotation}
-							enabled={settings.rotationEnabled}
-							onToggle={(on) => toggleOptional("rotation", on)}
-							onChange={(v) => update("rotation", v)}
+							label="pathRotation" value={settings.pathRotation}
+							enabled={settings.pathRotationEnabled}
+							onToggle={(on) => toggleOptional("pathRotation", on)}
+							onChange={(v) => update("pathRotation", v)}
 							min={0} max={1080} step={15} suffix="°"
 						/>
 						<OptionalRangeControl
-							label="blur" value={settings.blur}
-							enabled={settings.blurEnabled}
-							onToggle={(on) => toggleOptional("blur", on)}
-							onChange={(v) => update("blur", v)}
+							label="pathBlur" value={settings.pathBlur}
+							enabled={settings.pathBlurEnabled}
+							onToggle={(on) => toggleOptional("pathBlur", on)}
+							onChange={(v) => update("pathBlur", v)}
 							min={0} max={20} step={0.5} suffix="px"
 						/>
+
+						{/* Tile controls */}
+						<div style={{ borderTop: "1px solid #21262d", margin: "2px 0", paddingTop: "8px" }}>
+							<div style={sectionLabelStyle}>Tile — how blocks expand in place</div>
+						</div>
+						<RangeControl
+							label="tileSpeed" value={settings.tileSpeed}
+							onChange={(v) => update("tileSpeed", v)}
+							min={100} max={2500} step={50} suffix="ms"
+						/>
+						<OptionalRangeControl
+							label="tileRotation" value={settings.tileRotation}
+							enabled={settings.tileRotationEnabled}
+							onToggle={(on) => toggleOptional("tileRotation", on)}
+							onChange={(v) => update("tileRotation", v)}
+							min={0} max={1080} step={15} suffix="°"
+						/>
+						<OptionalRangeControl
+							label="tileBlur" value={settings.tileBlur}
+							enabled={settings.tileBlurEnabled}
+							onToggle={(on) => toggleOptional("tileBlur", on)}
+							onChange={(v) => update("tileBlur", v)}
+							min={0} max={20} step={0.5} suffix="px"
+						/>
+
+						{/* Feather */}
+						<div style={{ borderTop: "1px solid #21262d", margin: "2px 0" }} />
 						<OptionalRangeControl
 							label="feather" value={settings.feather}
 							enabled={settings.featherEnabled}

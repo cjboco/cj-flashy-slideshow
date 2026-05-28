@@ -428,11 +428,19 @@ export function FlashySlideshow({
 						const blockTileRotation = opts.randomize && opts.tileRotation !== 0
 							? opts.tileRotation + randomRange(-180, 180)
 							: opts.tileRotation;
+
+						// Set transform-origin to the tile's cell center so rotation
+						// spins around the tile, not the full-size container center.
+						const tileCX = blockW * b.x + blockW / 2;
+						const tileCY = blockH * b.y + blockH / 2;
+						const tileOrigin = blockTileRotation !== 0
+							? { transformOrigin: `${tileCX}px ${tileCY}px` }
+							: {};
 						const tileRotStart = blockTileRotation !== 0
-							? { transform: `rotate(${blockTileRotation}deg)` }
+							? { transform: `rotate(${blockTileRotation}deg)`, ...tileOrigin }
 							: {};
 						const tileRotEnd = blockTileRotation !== 0
-							? { transform: "rotate(0deg)" }
+							? { transform: "rotate(0deg)", ...tileOrigin }
 							: {};
 
 						const phase2Keyframes: Keyframe[] = feathered
