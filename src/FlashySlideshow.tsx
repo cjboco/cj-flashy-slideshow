@@ -91,6 +91,7 @@ export function FlashySlideshow({
 	speed,
 	randomness,
 	rotation,
+	rotationMode,
 	blur,
 	feather,
 	className,
@@ -148,12 +149,12 @@ export function FlashySlideshow({
 	const opts = useMemo(() => {
 		const presetOverrides = preset ? applyPreset(preset, width, height) : {};
 		return resolveOptions(
-			{ preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, randomize, speed, randomness, rotation, blur, feather },
+			{ preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, randomize, speed, randomness, rotation, rotationMode, blur, feather },
 			width,
 			height,
 			presetOverrides,
 		);
-	}, [preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, randomize, speed, randomness, rotation, blur, feather, width, height]);
+	}, [preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, randomize, speed, randomness, rotation, rotationMode, blur, feather, width, height]);
 
 	const blockW = Math.ceil(width / opts.xBlocks);
 	const blockH = Math.ceil(height / opts.yBlocks);
@@ -326,24 +327,32 @@ export function FlashySlideshow({
 						width, height, rounded, feathered,
 					);
 
-					// Build phase 1 keyframes — spiral path when rotation > 0
+					// Build phase 1 keyframes — spiral path or tile spin
 					const blockRotation = opts.randomize && opts.rotation !== 0
 						? opts.rotation + randomRange(-180, 180)
 						: opts.rotation;
+
+					const isTileRotation = opts.rotationMode === "tile";
 
 					const phase1Keyframes: Keyframe[] = [];
 
 					const blurVal = opts.blur > 0 ? `blur(${opts.blur}px)` : undefined;
 
-					if (blockRotation === 0) {
-						// Straight path
+					if (isTileRotation || blockRotation === 0) {
+						// Straight path (tile rotation is handled via CSS transform)
 						const startProps = getRegionProps(
 							b.startTop, b.startLeft, mbs, mbs,
 							width, height, rounded, feathered,
 						);
+						const tileStart = isTileRotation && blockRotation !== 0
+							? { transform: `rotate(${blockRotation}deg)` }
+							: {};
+						const tileEnd = isTileRotation && blockRotation !== 0
+							? { transform: "rotate(0deg)" }
+							: {};
 						phase1Keyframes.push(
-							{ ...startProps, ...(blurVal && { filter: blurVal }) },
-							{ ...midProps, ...(blurVal && { filter: blurVal }) },
+							{ ...startProps, ...tileStart, ...(blurVal && { filter: blurVal }) },
+							{ ...midProps, ...tileEnd, ...(blurVal && { filter: blurVal }) },
 						);
 					} else {
 						// Spiral arc path from start to center
@@ -465,6 +474,7 @@ export function FlashySlideshow({
 							applyRegionStyle(el, finalProps);
 							el.style.opacity = "1";
 							el.style.filter = "";
+							el.style.transform = "";
 							phase1.cancel();
 							phase2.cancel();
 

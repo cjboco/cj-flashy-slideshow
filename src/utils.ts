@@ -1,4 +1,4 @@
-import type { BlockData, Direction, ResolvedOptions } from "./types";
+import type { BlockData, Direction, ResolvedOptions, RotationMode } from "./types";
 
 const DIRECTIONS: Direction[] = [
 	"top",
@@ -193,6 +193,7 @@ export function resolveOptions(
 		speed?: number;
 		randomness?: number;
 		rotation?: number;
+		rotationMode?: RotationMode;
 		blur?: number;
 		feather?: number;
 	},
@@ -211,6 +212,7 @@ export function resolveOptions(
 	const speed = presetOverrides.speed ?? props.speed ?? 650;
 	const randomness = presetOverrides.randomness ?? props.randomness ?? 50;
 	const rotation = presetOverrides.rotation ?? props.rotation ?? 0;
+	const rotationMode = presetOverrides.rotationMode ?? props.rotationMode ?? "path";
 	const blur = presetOverrides.blur ?? props.blur ?? 0;
 	const feather = presetOverrides.feather ?? props.feather ?? 0;
 
@@ -236,6 +238,7 @@ export function resolveOptions(
 		speed: typeof speed !== "number" ? 650 : Math.max(100, Math.min(2500, speed)),
 		randomness: typeof randomness !== "number" ? 50 : Math.max(0, Math.min(100, randomness)),
 		rotation: typeof rotation !== "number" ? 0 : rotation,
+		rotationMode: minBlockSize === 0 ? "tile" : (rotationMode === "tile" ? "tile" : "path"),
 		blur: typeof blur !== "number" ? 0 : Math.max(0, blur),
 		feather: typeof feather !== "number" ? 0 : Math.max(0, Math.min(50, feather)),
 	};

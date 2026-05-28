@@ -6,4 +6,5 @@ export type {
 	FlashySlideshowProps,
 	ObjectFit,
 	Preset,
+	RotationMode,
 } from "./types";

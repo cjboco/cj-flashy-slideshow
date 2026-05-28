@@ -22,6 +22,8 @@ export type Direction =
 
 export type BlockStyle = "normal" | "rounded";
 
+export type RotationMode = "path" | "tile";
+
 export type Preset =
 	| "bricks"
 	| "cubism"
@@ -51,6 +53,7 @@ export interface FlashySlideshowOptions {
 	speed?: number;
 	randomness?: number;
 	rotation?: number;
+	rotationMode?: RotationMode;
 	blur?: number;
 	feather?: number;
 }
@@ -89,6 +92,7 @@ export interface ResolvedOptions {
 	speed: number;
 	randomness: number;
 	rotation: number;
+	rotationMode: RotationMode;
 	blur: number;
 	feather: number;
 }
