@@ -84,6 +84,7 @@ interface Settings {
 	tileRotationEnabled: boolean;
 	tileBlur: number;
 	tileBlurEnabled: boolean;
+	tileExact: boolean;
 	feather: number;
 	featherEnabled: boolean;
 }
@@ -98,6 +99,7 @@ const PROP_DEFAULTS = {
 	tileSpeed: 650,
 	tileRotation: 360, tileRotationEnabled: false,
 	tileBlur: 4, tileBlurEnabled: false,
+	tileExact: false,
 	feather: 15, featherEnabled: false,
 };
 
@@ -122,6 +124,7 @@ function resolvePresetValues(preset: Preset): Omit<Settings, "usePreset" | "pres
 		tileSpeed: resolved.tileSpeed,
 		tileRotation: resolved.tileRotation !== 0 ? resolved.tileRotation : 360,
 		tileRotationEnabled: resolved.tileRotation !== 0,
+		tileExact: resolved.tileExact,
 		tileBlur: resolved.tileBlur !== 0 ? resolved.tileBlur : 4,
 		tileBlurEnabled: resolved.tileBlur !== 0,
 		feather: resolved.feather !== 0 ? resolved.feather : 15,
@@ -150,6 +153,7 @@ function settingsToUrl(s: Settings): string {
 	if (s.pathBlurEnabled) p.set("pbl", String(s.pathBlur));
 	if (s.tileRotationEnabled) p.set("trot", String(s.tileRotation));
 	if (s.tileBlurEnabled) p.set("tbl", String(s.tileBlur));
+	if (s.tileExact) p.set("tex", "1");
 	if (s.featherEnabled) p.set("fe", String(s.feather));
 	const qs = p.toString();
 	return qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
@@ -190,6 +194,7 @@ function parseUrlSettings(): Settings {
 		tileRotationEnabled: p.has("trot"),
 		tileBlur: p.has("tbl") ? Number(p.get("tbl")) : base.tileBlur,
 		tileBlurEnabled: p.has("tbl"),
+		tileExact: p.has("tex") ? p.get("tex") === "1" : base.tileExact,
 		feather: p.has("fe") ? Number(p.get("fe")) : base.feather,
 		featherEnabled: p.has("fe"),
 	};
@@ -363,6 +368,7 @@ function buildCodeExample(s: Settings): string {
 	if (s.tileSpeed !== 650) lines.push(`  tileSpeed={${s.tileSpeed}}`);
 	if (s.tileRotationEnabled) lines.push(`  tileRotation={${s.tileRotation}}`);
 	if (s.tileBlurEnabled) lines.push(`  tileBlur={${s.tileBlur}}`);
+	if (s.tileExact) lines.push("  tileExact");
 	if (s.featherEnabled) lines.push(`  feather={${s.feather}}`);
 	return `<FlashySlideshow\n${lines.join("\n")}\n>\n  {/* slides */}\n</FlashySlideshow>`;
 }
@@ -529,6 +535,7 @@ function App() {
 								tileSpeed={settings.tileSpeed}
 								tileRotation={settings.tileRotationEnabled ? settings.tileRotation : 0}
 								tileBlur={settings.tileBlurEnabled ? settings.tileBlur : 0}
+								tileExact={settings.tileExact}
 								feather={settings.featherEnabled ? settings.feather : 0}
 								onSlideChange={setSlideIndex}
 							>
@@ -668,6 +675,12 @@ function App() {
 							onChange={(v) => update("tileBlur", v)}
 							min={0} max={20} step={0.5} suffix="px"
 						/>
+						<div style={{ padding: "4px 0" }}>
+							<label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "12px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "#8b949e" }}>
+								<input type="checkbox" checked={settings.tileExact} onChange={(e) => update("tileExact", e.target.checked)} style={{ accentColor: "#388bfd", cursor: "pointer", margin: 0 }} />
+								tileExact
+							</label>
+						</div>
 
 						{/* Feather */}
 						<div style={{ borderTop: "1px solid #21262d", margin: "2px 0" }} />

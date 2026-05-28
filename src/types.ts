@@ -55,6 +55,7 @@ export interface FlashySlideshowOptions {
 	tileSpeed?: number;
 	tileRotation?: number;
 	tileBlur?: number;
+	tileExact?: boolean;
 	feather?: number;
 }
 
@@ -96,5 +97,6 @@ export interface ResolvedOptions {
 	tileSpeed: number;
 	tileRotation: number;
 	tileBlur: number;
+	tileExact: boolean;
 	feather: number;
 }

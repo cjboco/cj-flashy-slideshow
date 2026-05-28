@@ -95,6 +95,7 @@ export function FlashySlideshow({
 	tileSpeed,
 	tileRotation,
 	tileBlur,
+	tileExact,
 	feather,
 	className,
 	onSlideChange,
@@ -151,12 +152,12 @@ export function FlashySlideshow({
 	const opts = useMemo(() => {
 		const presetOverrides = preset ? applyPreset(preset, width, height) : {};
 		return resolveOptions(
-			{ preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, randomize, randomness, pathSpeed, pathRotation, pathBlur, tileSpeed, tileRotation, tileBlur, feather },
+			{ preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, randomize, randomness, pathSpeed, pathRotation, pathBlur, tileSpeed, tileRotation, tileBlur, tileExact, feather },
 			width,
 			height,
 			presetOverrides,
 		);
-	}, [preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, randomize, randomness, pathSpeed, pathRotation, pathBlur, tileSpeed, tileRotation, tileBlur, feather, width, height]);
+	}, [preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, randomize, randomness, pathSpeed, pathRotation, pathBlur, tileSpeed, tileRotation, tileBlur, tileExact, feather, width, height]);
 
 	const blockW = Math.ceil(width / opts.xBlocks);
 	const blockH = Math.ceil(height / opts.yBlocks);
@@ -388,7 +389,12 @@ export function FlashySlideshow({
 
 						// Phase 2: expand from small at center to full cell
 						let expandTop: number, expandLeft: number, expandW: number, expandH: number;
-						if (rounded) {
+						if (opts.tileExact) {
+							expandTop = blockH * b.y;
+							expandLeft = blockW * b.x;
+							expandW = blockW;
+							expandH = blockH;
+						} else if (rounded) {
 							const cx = blockW * b.x + blockW / 2;
 							const cy = blockH * b.y + blockH / 2;
 							const bigR = Math.ceil(Math.hypot(blockW, blockH));

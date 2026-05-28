@@ -166,7 +166,8 @@ Once a block reaches its spot in the grid, it **expands to fill its cell** — l
 | --------------- | -------- | ------- | ---------------------------------------------------- |
 | `tileSpeed`     | `number` | `650`   | How fast each block expands to fill its cell, in milliseconds (100-2500). Lower = faster. |
 | `tileRotation`  | `number` | `0`     | Spins the block as it expands. The value is how many degrees it rotates — `180` is a half turn, `360` is a full spin, `720` is two full spins, etc. Works even when `minBlockSize` is 0. |
-| `tileBlur`      | `number` | `0`     | Starts the block blurry and gradually sharpens as it expands. The value is the starting blur in pixels. |
+| `tileBlur`      | `number`  | `0`     | Starts the block blurry and gradually sharpens as it expands. The value is the starting blur in pixels. |
+| `tileExact`     | `boolean` | `false` | When off, tiles grow slightly larger than their cell so they overlap and blend together seamlessly. When on, each tile fits its cell exactly with no overlap — like a clean grid of puzzle pieces. Especially useful with `tileRotation`, where overlapping tiles can look messy. |
 
 ## Presets
 

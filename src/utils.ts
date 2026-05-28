@@ -197,6 +197,7 @@ export function resolveOptions(
 		tileSpeed?: number;
 		tileRotation?: number;
 		tileBlur?: number;
+		tileExact?: boolean;
 		feather?: number;
 	},
 	w: number,
@@ -218,6 +219,7 @@ export function resolveOptions(
 	const tileSpeed = presetOverrides.tileSpeed ?? props.tileSpeed ?? 650;
 	const tileRotation = presetOverrides.tileRotation ?? props.tileRotation ?? 0;
 	const tileBlur = presetOverrides.tileBlur ?? props.tileBlur ?? 0;
+	const tileExact = presetOverrides.tileExact ?? props.tileExact ?? false;
 	const feather = presetOverrides.feather ?? props.feather ?? 0;
 
 	xBlocks = typeof xBlocks !== "number" ? 3 : xBlocks < 1 ? 1 : xBlocks;
@@ -246,6 +248,7 @@ export function resolveOptions(
 		tileSpeed: typeof tileSpeed !== "number" ? 650 : Math.max(100, Math.min(2500, tileSpeed)),
 		tileRotation: typeof tileRotation !== "number" ? 0 : tileRotation,
 		tileBlur: typeof tileBlur !== "number" ? 0 : Math.max(0, tileBlur),
+		tileExact: typeof tileExact !== "boolean" ? false : tileExact,
 		feather: typeof feather !== "number" ? 0 : Math.max(0, Math.min(50, feather)),
 	};
 }
