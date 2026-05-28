@@ -88,11 +88,13 @@ export function FlashySlideshow({
 	style,
 	translucent,
 	randomize,
-	speed,
 	randomness,
-	rotation,
-	rotationMode,
-	blur,
+	pathSpeed,
+	pathRotation,
+	pathBlur,
+	tileSpeed,
+	tileRotation,
+	tileBlur,
 	feather,
 	className,
 	onSlideChange,
@@ -149,12 +151,12 @@ export function FlashySlideshow({
 	const opts = useMemo(() => {
 		const presetOverrides = preset ? applyPreset(preset, width, height) : {};
 		return resolveOptions(
-			{ preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, randomize, speed, randomness, rotation, rotationMode, blur, feather },
+			{ preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, randomize, randomness, pathSpeed, pathRotation, pathBlur, tileSpeed, tileRotation, tileBlur, feather },
 			width,
 			height,
 			presetOverrides,
 		);
-	}, [preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, randomize, speed, randomness, rotation, rotationMode, blur, feather, width, height]);
+	}, [preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, randomize, randomness, pathSpeed, pathRotation, pathBlur, tileSpeed, tileRotation, tileBlur, feather, width, height]);
 
 	const blockW = Math.ceil(width / opts.xBlocks);
 	const blockH = Math.ceil(height / opts.yBlocks);
@@ -212,7 +214,7 @@ export function FlashySlideshow({
 
 		const staggerTimers: ReturnType<typeof setTimeout>[] = [];
 		const isWipe = isWipeDirection(opts.currentDirection);
-		const wipeSpread = opts.speed * 2;
+		const wipeSpread = opts.pathSpeed * 2;
 
 		const state: AnimState = {
 			currentSlide: 0,
@@ -267,7 +269,7 @@ export function FlashySlideshow({
 					width, height, rounded, feathered,
 				));
 				el.style.opacity = isWipe ? "0" : String(b.opacity);
-				el.style.filter = opts.blur > 0 ? `blur(${opts.blur}px)` : "";
+				el.style.filter = opts.pathBlur > 0 ? `blur(${opts.pathBlur}px)` : "";
 			}
 
 			setNextSlide(nextIdx);
@@ -314,45 +316,38 @@ export function FlashySlideshow({
 						mbs / 2 +
 						(opts.randomize ? randomRange(0, mbs) - mbs / 2 : 0);
 
-					const variance = opts.randomize ? opts.speed * opts.randomness / 100 : 0;
+					const pathVariance = opts.randomize ? opts.pathSpeed * opts.randomness / 100 : 0;
+					const tileVariance = opts.randomize ? opts.tileSpeed * opts.randomness / 100 : 0;
 					const phase1Duration = opts.randomize
-						? randomRange(Math.max(50, opts.speed - variance), opts.speed + variance)
-						: opts.speed;
+						? randomRange(Math.max(50, opts.pathSpeed - pathVariance), opts.pathSpeed + pathVariance)
+						: opts.pathSpeed;
 					const phase2Duration = opts.randomize
-						? randomRange(Math.max(50, opts.speed - variance), opts.speed + variance)
-						: opts.speed;
+						? randomRange(Math.max(50, opts.tileSpeed - tileVariance), opts.tileSpeed + tileVariance)
+						: opts.tileSpeed;
 
 					const midProps = getRegionProps(
 						midCenterY, midCenterX, mbs, mbs,
 						width, height, rounded, feathered,
 					);
 
-					// Build phase 1 keyframes — spiral path or tile spin
-					const blockRotation = opts.randomize && opts.rotation !== 0
-						? opts.rotation + randomRange(-180, 180)
-						: opts.rotation;
-
-					const isTileRotation = opts.rotationMode === "tile";
+					// Build phase 1 keyframes — spiral path via pathRotation
+					const blockPathRotation = opts.randomize && opts.pathRotation !== 0
+						? opts.pathRotation + randomRange(-180, 180)
+						: opts.pathRotation;
 
 					const phase1Keyframes: Keyframe[] = [];
 
-					const blurVal = opts.blur > 0 ? `blur(${opts.blur}px)` : undefined;
+					const pathBlurVal = opts.pathBlur > 0 ? `blur(${opts.pathBlur}px)` : undefined;
 
-					if (isTileRotation || blockRotation === 0) {
-						// Straight path (tile rotation is handled via CSS transform)
+					if (blockPathRotation === 0) {
+						// Straight path
 						const startProps = getRegionProps(
 							b.startTop, b.startLeft, mbs, mbs,
 							width, height, rounded, feathered,
 						);
-						const tileStart = isTileRotation && blockRotation !== 0
-							? { transform: `rotate(${blockRotation}deg)` }
-							: {};
-						const tileEnd = isTileRotation && blockRotation !== 0
-							? { transform: "rotate(0deg)" }
-							: {};
 						phase1Keyframes.push(
-							{ ...startProps, ...tileStart, ...(blurVal && { filter: blurVal }) },
-							{ ...midProps, ...tileEnd, ...(blurVal && { filter: blurVal }) },
+							{ ...startProps, ...(pathBlurVal && { filter: pathBlurVal }) },
+							{ ...midProps, ...(pathBlurVal && { filter: pathBlurVal }) },
 						);
 					} else {
 						// Spiral arc path from start to center
@@ -364,8 +359,8 @@ export function FlashySlideshow({
 						const dy = startCY - midCY;
 						const startAngle = Math.atan2(dy, dx);
 						const startRadius = Math.sqrt(dx * dx + dy * dy);
-						const rotRad = (blockRotation * Math.PI) / 180;
-						const steps = Math.max(8, Math.ceil(Math.abs(blockRotation) / 30));
+						const rotRad = (blockPathRotation * Math.PI) / 180;
+						const steps = Math.max(8, Math.ceil(Math.abs(blockPathRotation) / 30));
 
 						for (let k = 0; k <= steps; k++) {
 							const t = k / steps;
@@ -377,7 +372,7 @@ export function FlashySlideshow({
 							const clipY = cy - mbs / 2;
 							phase1Keyframes.push({
 								...getRegionProps(clipY, clipX, mbs, mbs, width, height, rounded, feathered),
-								...(blurVal && { filter: blurVal }),
+								...(pathBlurVal && { filter: pathBlurVal }),
 							});
 						}
 					}
@@ -429,24 +424,38 @@ export function FlashySlideshow({
 							finalProps = expandedProps;
 						}
 
+						const tileBlurVal = opts.tileBlur > 0 ? `blur(${opts.tileBlur}px)` : undefined;
+						const blockTileRotation = opts.randomize && opts.tileRotation !== 0
+							? opts.tileRotation + randomRange(-180, 180)
+							: opts.tileRotation;
+						const tileRotStart = blockTileRotation !== 0
+							? { transform: `rotate(${blockTileRotation}deg)` }
+							: {};
+						const tileRotEnd = blockTileRotation !== 0
+							? { transform: "rotate(0deg)" }
+							: {};
+
 						const phase2Keyframes: Keyframe[] = feathered
 							? [
 								{
 									...midProps,
 									opacity: String(b.opacity),
-									...(blurVal && { filter: blurVal }),
+									...tileRotStart,
+									...(tileBlurVal && { filter: tileBlurVal }),
 									offset: 0,
 								},
 								{
 									...expandedProps,
 									opacity: "1",
-									...(blurVal && { filter: "blur(0px)" }),
+									...tileRotEnd,
+									...(tileBlurVal && { filter: "blur(0px)" }),
 									offset: 0.75,
 								},
 								{
 									...finalProps,
 									opacity: "1",
-									...(blurVal && { filter: "blur(0px)" }),
+									...tileRotEnd,
+									...(tileBlurVal && { filter: "blur(0px)" }),
 									offset: 1.0,
 								},
 							]
@@ -454,12 +463,14 @@ export function FlashySlideshow({
 								{
 									...midProps,
 									opacity: String(b.opacity),
-									...(blurVal && { filter: blurVal }),
+									...tileRotStart,
+									...(tileBlurVal && { filter: tileBlurVal }),
 								},
 								{
 									...expandedProps,
 									opacity: "1",
-									...(blurVal && { filter: "blur(0px)" }),
+									...tileRotEnd,
+									...(tileBlurVal && { filter: "blur(0px)" }),
 								},
 							];
 

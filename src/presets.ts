@@ -76,8 +76,8 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 				style: "rounded",
 				translucent: true,
 				randomize: true,
-				rotation: 360,
-				blur: 3,
+				pathRotation: 360,
+				pathBlur: 3,
 				delay: 4000,
 			};
 		case "cascade":
@@ -88,8 +88,8 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 				direction: "top",
 				translucent: true,
 				randomize: true,
-				rotation: 180,
-				blur: 2,
+				pathRotation: 180,
+				pathBlur: 2,
 				delay: 2500,
 			};
 		case "dissolve":
@@ -100,7 +100,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 				direction: "none",
 				translucent: true,
 				randomize: true,
-				blur: 8,
+				pathBlur: 8,
 				feather: 20,
 				delay: 3000,
 			};
@@ -113,8 +113,8 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 				style: "rounded",
 				translucent: true,
 				randomize: true,
-				rotation: 360,
-				blur: 3,
+				pathRotation: 360,
+				pathBlur: 3,
 				delay: 3000,
 			};
 		case "pixelate":
@@ -148,7 +148,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 				translucent: true,
 				randomize: true,
 				randomness: 60,
-				blur: 4,
+				pathBlur: 4,
 				feather: 15,
 				delay: 3000,
 			};

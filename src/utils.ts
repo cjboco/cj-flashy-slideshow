@@ -1,4 +1,4 @@
-import type { BlockData, Direction, ResolvedOptions, RotationMode } from "./types";
+import type { BlockData, Direction, ResolvedOptions } from "./types";
 
 const DIRECTIONS: Direction[] = [
 	"top",
@@ -190,11 +190,13 @@ export function resolveOptions(
 		style?: "normal" | "rounded";
 		translucent?: boolean;
 		randomize?: boolean;
-		speed?: number;
 		randomness?: number;
-		rotation?: number;
-		rotationMode?: RotationMode;
-		blur?: number;
+		pathSpeed?: number;
+		pathRotation?: number;
+		pathBlur?: number;
+		tileSpeed?: number;
+		tileRotation?: number;
+		tileBlur?: number;
 		feather?: number;
 	},
 	w: number,
@@ -209,11 +211,13 @@ export function resolveOptions(
 	const style = presetOverrides.style ?? props.style ?? "normal";
 	const translucent = presetOverrides.translucent ?? props.translucent ?? false;
 	const randomize = presetOverrides.randomize ?? props.randomize ?? false;
-	const speed = presetOverrides.speed ?? props.speed ?? 650;
 	const randomness = presetOverrides.randomness ?? props.randomness ?? 50;
-	const rotation = presetOverrides.rotation ?? props.rotation ?? 0;
-	const rotationMode = presetOverrides.rotationMode ?? props.rotationMode ?? "path";
-	const blur = presetOverrides.blur ?? props.blur ?? 0;
+	const pathSpeed = presetOverrides.pathSpeed ?? props.pathSpeed ?? 650;
+	const pathRotation = presetOverrides.pathRotation ?? props.pathRotation ?? 0;
+	const pathBlur = presetOverrides.pathBlur ?? props.pathBlur ?? 0;
+	const tileSpeed = presetOverrides.tileSpeed ?? props.tileSpeed ?? 650;
+	const tileRotation = presetOverrides.tileRotation ?? props.tileRotation ?? 0;
+	const tileBlur = presetOverrides.tileBlur ?? props.tileBlur ?? 0;
 	const feather = presetOverrides.feather ?? props.feather ?? 0;
 
 	xBlocks = typeof xBlocks !== "number" ? 3 : xBlocks < 1 ? 1 : xBlocks;
@@ -235,11 +239,13 @@ export function resolveOptions(
 		style: style !== "rounded" ? "normal" : "rounded",
 		translucent: typeof translucent !== "boolean" ? false : translucent,
 		randomize: typeof randomize !== "boolean" ? false : randomize,
-		speed: typeof speed !== "number" ? 650 : Math.max(100, Math.min(2500, speed)),
 		randomness: typeof randomness !== "number" ? 50 : Math.max(0, Math.min(100, randomness)),
-		rotation: typeof rotation !== "number" ? 0 : rotation,
-		rotationMode: minBlockSize === 0 ? "tile" : (rotationMode === "tile" ? "tile" : "path"),
-		blur: typeof blur !== "number" ? 0 : Math.max(0, blur),
+		pathSpeed: typeof pathSpeed !== "number" ? 650 : Math.max(100, Math.min(2500, pathSpeed)),
+		pathRotation: minBlockSize === 0 ? 0 : (typeof pathRotation !== "number" ? 0 : pathRotation),
+		pathBlur: typeof pathBlur !== "number" ? 0 : Math.max(0, pathBlur),
+		tileSpeed: typeof tileSpeed !== "number" ? 650 : Math.max(100, Math.min(2500, tileSpeed)),
+		tileRotation: typeof tileRotation !== "number" ? 0 : tileRotation,
+		tileBlur: typeof tileBlur !== "number" ? 0 : Math.max(0, tileBlur),
 		feather: typeof feather !== "number" ? 0 : Math.max(0, Math.min(50, feather)),
 	};
 }

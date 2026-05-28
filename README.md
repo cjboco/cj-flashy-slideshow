@@ -118,7 +118,7 @@ You can use any `wipe*` direction with custom settings:
   height={400}
   direction="wipeTopLeft"
   randomize
-  blur={3}
+  pathBlur={3}
 >
   {/* slides */}
 </FlashySlideshow>
@@ -126,28 +126,47 @@ You can use any `wipe*` direction with custom settings:
 
 ## Props
 
+### General
+
 | Prop            | Type                      | Default    | Description                                          |
 | --------------- | ------------------------- | ---------- | ---------------------------------------------------- |
+| `children`      | `ReactNode[]`             | _required_ | Slide content (each child is one slide)              |
 | `width`         | `number`                  | `100%`     | Width of the slideshow in pixels (omit for auto)     |
 | `height`        | `number`                  | `100%`     | Height of the slideshow in pixels (omit for auto)    |
 | `objectFit`     | `ObjectFit`               | `"cover"`  | How `<img>`/`<video>` children fill the container    |
-| `children`      | `ReactNode[]`             | _required_ | Slide content (each child is one slide)              |
 | `preset`        | `Preset`                  | `"bricks"` | Animation preset name                                |
 | `delay`         | `number`                  | varies     | Milliseconds between transitions                     |
 | `direction`     | `Direction`               | varies     | Direction blocks enter from (includes wipe variants) |
 | `style`         | `BlockStyle`              | `"normal"` | Block shape (`"normal"` or `"rounded"`)              |
 | `translucent`   | `boolean`                 | `false`    | Semi-transparent blocks during transition            |
-| `speed`         | `number`                  | `650`      | Base duration per animation phase in ms (100-2500)   |
 | `randomize`     | `boolean`                 | `false`    | Randomize block timing and positioning               |
 | `randomness`    | `number`                  | `50`       | Timing variance percentage when randomize is on (0-100) |
 | `xBlocks`       | `number`                  | varies     | Number of horizontal blocks                          |
 | `yBlocks`       | `number`                  | varies     | Number of vertical blocks                            |
-| `minBlockSize`  | `number`                  | varies     | Minimum block size in pixels                         |
-| `rotation`      | `number`                  | `0`        | Degrees of arc for the block flight path (0 = straight line) |
-| `blur`          | `number`                  | `0`        | Starting blur in pixels (clears as blocks expand)    |
+| `minBlockSize`  | `number`                  | varies     | Minimum block size in pixels during flight           |
 | `feather`       | `number`                  | `0`        | Soft edge percentage (0-50) using gradient masks     |
 | `className`     | `string`                  | —          | CSS class for the container                          |
 | `onSlideChange` | `(index: number) => void` | —          | Callback when the active slide changes               |
+
+### Path Props — How blocks travel to their position
+
+Think of each block as a little piece of the next image. During a transition, these pieces **fly in from outside** the slideshow toward where they belong in the grid. The "path" is the route each piece takes to get there.
+
+| Prop            | Type     | Default | Description                                          |
+| --------------- | -------- | ------- | ---------------------------------------------------- |
+| `pathSpeed`     | `number` | `650`   | How fast each block flies in, in milliseconds (100-2500). Lower = faster. |
+| `pathRotation`  | `number` | `0`     | Makes blocks fly in along a curved, spiral-like arc instead of a straight line. The value is degrees of curve — `0` means straight, `360` is one full loop, and higher values create tighter spirals. Requires `minBlockSize` > 0 to be visible. |
+| `pathBlur`      | `number` | `0`     | Adds a blur effect (in pixels) while the block is flying in. Creates a motion-blur look. |
+
+### Tile Props — How blocks reveal once they arrive
+
+Once a block reaches its spot in the grid, it **expands to fill its cell** — like a puzzle piece snapping into place. The "tile" is the block as it grows from a small dot into its final size, revealing the next image underneath.
+
+| Prop            | Type     | Default | Description                                          |
+| --------------- | -------- | ------- | ---------------------------------------------------- |
+| `tileSpeed`     | `number` | `650`   | How fast each block expands to fill its cell, in milliseconds (100-2500). Lower = faster. |
+| `tileRotation`  | `number` | `0`     | Spins the block as it expands. The value is how many degrees it rotates — `180` is a half turn, `360` is a full spin, `720` is two full spins, etc. Works even when `minBlockSize` is 0. |
+| `tileBlur`      | `number` | `0`     | Starts the block blurry and gradually sharpens as it expands. The value is the starting blur in pixels. |
 
 ## Presets
 
