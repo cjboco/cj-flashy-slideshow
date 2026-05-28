@@ -6,7 +6,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 			return {
 				xBlocks: Math.round(w / 100),
 				yBlocks: Math.round(h / 100),
-				minBlockSize: Math.round(w / 100) * 25,
+				initialTileSize: Math.round(w / 100) * 25,
 				direction: "random",
 				translucent: true,
 				randomize: true,
@@ -16,7 +16,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 			return {
 				xBlocks: Math.round(w / 75),
 				yBlocks: Math.round(h / 75),
-				minBlockSize: 2,
+				initialTileSize: 2,
 				style: "rounded",
 				direction: "top",
 				translucent: false,
@@ -27,7 +27,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 			return {
 				xBlocks: 1,
 				yBlocks: Math.round(h / 15),
-				minBlockSize: 0,
+				initialTileSize: 0,
 				style: "normal",
 				direction: "top",
 				translucent: false,
@@ -38,7 +38,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 			return {
 				xBlocks: Math.round(w / 15),
 				yBlocks: 1,
-				minBlockSize: 0,
+				initialTileSize: 0,
 				style: "normal",
 				direction: "top",
 				translucent: false,
@@ -49,7 +49,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 			return {
 				xBlocks: 1,
 				yBlocks: Math.round(h / 10),
-				minBlockSize: 0,
+				initialTileSize: 0,
 				style: "normal",
 				direction: "top",
 				translucent: true,
@@ -60,7 +60,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 			return {
 				xBlocks: Math.round(w / 10),
 				yBlocks: 1,
-				minBlockSize: 0,
+				initialTileSize: 0,
 				style: "normal",
 				direction: "top",
 				translucent: true,
@@ -71,7 +71,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 			return {
 				xBlocks: Math.round(w / 100),
 				yBlocks: Math.round(h / 100),
-				minBlockSize: Math.round(w / 100) * 10,
+				initialTileSize: Math.round(w / 100) * 10,
 				direction: "random",
 				style: "rounded",
 				translucent: true,
@@ -84,7 +84,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 			return {
 				xBlocks: Math.round(w / 60),
 				yBlocks: Math.round(h / 60),
-				minBlockSize: 5,
+				initialTileSize: 5,
 				direction: "top",
 				translucent: true,
 				randomize: true,
@@ -96,7 +96,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 			return {
 				xBlocks: Math.round(w / 80),
 				yBlocks: Math.round(h / 80),
-				minBlockSize: 2,
+				initialTileSize: 2,
 				direction: "none",
 				translucent: true,
 				randomize: true,
@@ -108,7 +108,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 			return {
 				xBlocks: Math.round(w / 80),
 				yBlocks: Math.round(h / 80),
-				minBlockSize: Math.round(w / 100) * 4,
+				initialTileSize: Math.round(w / 100) * 4,
 				direction: "random",
 				style: "rounded",
 				translucent: true,
@@ -121,7 +121,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 			return {
 				xBlocks: Math.round(w / 20),
 				yBlocks: Math.round(h / 20),
-				minBlockSize: 0,
+				initialTileSize: 0,
 				direction: "none",
 				randomize: true,
 				delay: 2000,
@@ -130,7 +130,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 			return {
 				xBlocks: Math.round(w / 50),
 				yBlocks: Math.round(h / 50),
-				minBlockSize: 0,
+				initialTileSize: 0,
 				direction: "wipeLeft",
 				style: "normal",
 				translucent: false,
@@ -142,7 +142,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 			return {
 				xBlocks: Math.round(w / 60),
 				yBlocks: Math.round(h / 60),
-				minBlockSize: 0,
+				initialTileSize: 0,
 				direction: "wipeLeft",
 				style: "rounded",
 				translucent: true,
@@ -156,7 +156,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 			return {
 				xBlocks: Math.round(w / 100),
 				yBlocks: Math.round(h / 100),
-				minBlockSize: 3,
+				initialTileSize: 3,
 				style: "normal",
 				direction: "left",
 				translucent: false,

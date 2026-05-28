@@ -42,7 +42,7 @@ export interface FlashySlideshowOptions {
 	preset?: Preset;
 	xBlocks?: number;
 	yBlocks?: number;
-	minBlockSize?: number;
+	initialTileSize?: number;
 	delay?: number;
 	direction?: Direction;
 	style?: BlockStyle;
@@ -83,7 +83,7 @@ export interface BlockData {
 export interface ResolvedOptions {
 	xBlocks: number;
 	yBlocks: number;
-	minBlockSize: number;
+	initialTileSize: number;
 	delay: number;
 	direction: Direction;
 	currentDirection: Direction;

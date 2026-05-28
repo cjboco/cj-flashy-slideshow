@@ -82,7 +82,7 @@ export function FlashySlideshow({
 	preset,
 	xBlocks,
 	yBlocks,
-	minBlockSize,
+	initialTileSize,
 	delay,
 	direction,
 	style,
@@ -152,12 +152,12 @@ export function FlashySlideshow({
 	const opts = useMemo(() => {
 		const presetOverrides = preset ? applyPreset(preset, width, height) : {};
 		return resolveOptions(
-			{ preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, randomize, randomness, pathSpeed, pathRotation, pathBlur, tileSpeed, tileRotation, tileBlur, tileExact, feather },
+			{ preset, xBlocks, yBlocks, initialTileSize, delay, direction, style, translucent, randomize, randomness, pathSpeed, pathRotation, pathBlur, tileSpeed, tileRotation, tileBlur, tileExact, feather },
 			width,
 			height,
 			presetOverrides,
 		);
-	}, [preset, xBlocks, yBlocks, minBlockSize, delay, direction, style, translucent, randomize, randomness, pathSpeed, pathRotation, pathBlur, tileSpeed, tileRotation, tileBlur, tileExact, feather, width, height]);
+	}, [preset, xBlocks, yBlocks, initialTileSize, delay, direction, style, translucent, randomize, randomness, pathSpeed, pathRotation, pathBlur, tileSpeed, tileRotation, tileBlur, tileExact, feather, width, height]);
 
 	const blockW = Math.ceil(width / opts.xBlocks);
 	const blockH = Math.ceil(height / opts.yBlocks);
@@ -253,7 +253,7 @@ export function FlashySlideshow({
 						b.y,
 						blockW,
 						blockH,
-						opts.minBlockSize,
+						opts.initialTileSize,
 						width,
 						height,
 					);
@@ -264,7 +264,7 @@ export function FlashySlideshow({
 				const el = blockEls[i];
 				if (!el) continue;
 
-				const initSize = isWipe ? 0 : opts.minBlockSize;
+				const initSize = isWipe ? 0 : opts.initialTileSize;
 				applyRegionStyle(el, getRegionProps(
 					b.startTop, b.startLeft, initSize, initSize,
 					width, height, rounded, feathered,
@@ -304,7 +304,7 @@ export function FlashySlideshow({
 						el.style.opacity = String(b.opacity);
 					}
 
-					const mbs = opts.minBlockSize;
+					const mbs = opts.initialTileSize;
 
 					const midCenterX =
 						blockW * b.x +

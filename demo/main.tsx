@@ -67,7 +67,7 @@ interface Settings {
 	slideType: SlideType;
 	xBlocks: number;
 	yBlocks: number;
-	minBlockSize: number;
+	initialTileSize: number;
 	delay: number;
 	direction: Direction;
 	style: BlockStyle;
@@ -90,7 +90,7 @@ interface Settings {
 }
 
 const PROP_DEFAULTS = {
-	xBlocks: 12, yBlocks: 3, minBlockSize: 3, delay: 3000,
+	xBlocks: 12, yBlocks: 3, initialTileSize: 3, delay: 3000,
 	direction: "left" as Direction, style: "normal" as BlockStyle,
 	translucent: false, randomize: false, randomness: 50,
 	pathSpeed: 650,
@@ -109,7 +109,7 @@ function resolvePresetValues(preset: Preset): Omit<Settings, "usePreset" | "pres
 	return {
 		xBlocks: resolved.xBlocks,
 		yBlocks: resolved.yBlocks,
-		minBlockSize: resolved.minBlockSize,
+		initialTileSize: resolved.initialTileSize,
 		delay: resolved.delay,
 		direction: resolved.direction,
 		style: resolved.style,
@@ -140,7 +140,7 @@ function settingsToUrl(s: Settings): string {
 	if (s.slideType !== "images") p.set("st", s.slideType);
 	p.set("xb", String(s.xBlocks));
 	p.set("yb", String(s.yBlocks));
-	p.set("mbs", String(s.minBlockSize));
+	p.set("mbs", String(s.initialTileSize));
 	p.set("d", String(s.delay));
 	p.set("dir", s.direction);
 	p.set("sty", s.style);
@@ -177,7 +177,7 @@ function parseUrlSettings(): Settings {
 		slideType: (p.get("st") as SlideType) || "images",
 		xBlocks: p.has("xb") ? Number(p.get("xb")) : base.xBlocks,
 		yBlocks: p.has("yb") ? Number(p.get("yb")) : base.yBlocks,
-		minBlockSize: p.has("mbs") ? Number(p.get("mbs")) : base.minBlockSize,
+		initialTileSize: p.has("mbs") ? Number(p.get("mbs")) : base.initialTileSize,
 		delay: p.has("d") ? Number(p.get("d")) : base.delay,
 		direction: p.has("dir") ? (p.get("dir") as Direction) : base.direction,
 		style: p.has("sty") ? (p.get("sty") as BlockStyle) : base.style,
@@ -355,7 +355,7 @@ function buildCodeExample(s: Settings): string {
 	const lines: string[] = [`  width={${W}}`, `  height={${H}}`];
 	if (s.xBlocks !== 12) lines.push(`  xBlocks={${s.xBlocks}}`);
 	if (s.yBlocks !== 3) lines.push(`  yBlocks={${s.yBlocks}}`);
-	if (s.minBlockSize !== 3) lines.push(`  minBlockSize={${s.minBlockSize}}`);
+	if (s.initialTileSize !== 3) lines.push(`  initialTileSize={${s.initialTileSize}}`);
 	if (s.delay !== 3000) lines.push(`  delay={${s.delay}}`);
 	if (s.direction !== "left") lines.push(`  direction="${s.direction}"`);
 	if (s.style !== "normal") lines.push(`  style="${s.style}"`);
@@ -422,7 +422,7 @@ function App() {
 	const code = useMemo(() => buildCodeExample(settings), [settings]);
 	const slideshowKey = JSON.stringify(settings);
 	const activePreset = PRESETS.find((p) => p.value === settings.preset);
-	const pathDisabled = settings.minBlockSize === 0;
+	const pathDisabled = settings.initialTileSize === 0;
 
 	return (
 		<div style={{ minHeight: "100vh", background: "#0f1117", color: "#e1e4e8" }}>
@@ -506,8 +506,8 @@ function App() {
 
 				{/* Slideshow + Controls side by side */}
 				<div style={{ display: "flex", gap: "24px", alignItems: "flex-start", marginBottom: "32px" }}>
-					{/* Left: Slideshow */}
-					<div style={{ flexShrink: 0 }}>
+					{/* Left: Slideshow + Code */}
+					<div style={{ flexShrink: 0, width: `${W}px` }}>
 						<div
 							style={{
 								borderRadius: "8px", overflow: "hidden",
@@ -522,7 +522,7 @@ function App() {
 								height={H}
 								xBlocks={settings.xBlocks}
 								yBlocks={settings.yBlocks}
-								minBlockSize={settings.minBlockSize}
+								initialTileSize={settings.initialTileSize}
 								delay={settings.delay}
 								direction={settings.direction}
 								style={settings.style}
@@ -554,8 +554,26 @@ function App() {
 								]}
 							</FlashySlideshow>
 						</div>
-						<div style={{ fontSize: "13px", color: "#484f58" }}>
+						<div style={{ fontSize: "13px", color: "#484f58", marginBottom: "16px" }}>
 							Slide {slideIndex + 1} of 5
+						</div>
+
+						{/* Code example */}
+						<div>
+							<h3 style={{ fontSize: "16px", fontWeight: 600, color: "#f0f6fc", margin: "0 0 12px" }}>Code</h3>
+							<div style={{ background: "#161b22", border: "1px solid #21262d", borderRadius: "8px", overflow: "hidden" }}>
+								<div style={{ padding: "4px 12px", background: "#1c2128", borderBottom: "1px solid #21262d", fontSize: "12px", color: "#484f58" }}>
+									tsx
+								</div>
+								<pre
+									style={{
+										margin: 0, padding: "16px", fontSize: "13px", lineHeight: 1.6, color: "#c9d1d9", overflowX: "auto",
+										fontFamily: "'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace",
+									}}
+								>
+									<code>{code}</code>
+								</pre>
+							</div>
 						</div>
 					</div>
 
@@ -584,8 +602,8 @@ function App() {
 							min={1} max={50} step={1}
 						/>
 						<RangeControl
-							label="minBlockSize" value={settings.minBlockSize}
-							onChange={(v) => update("minBlockSize", v)}
+							label="initialTileSize" value={settings.initialTileSize}
+							onChange={(v) => update("initialTileSize", v)}
 							min={0} max={200} step={1}
 						/>
 						<RangeControl
@@ -628,7 +646,7 @@ function App() {
 						<div style={{ borderTop: "1px solid #21262d", margin: "2px 0", paddingTop: "8px" }}>
 							<div style={sectionLabelStyle}>
 								Path — how blocks fly in
-								{pathDisabled && <span style={{ color: "#484f58", fontWeight: 400, marginLeft: "6px" }}>(needs minBlockSize &gt; 0)</span>}
+								{pathDisabled && <span style={{ color: "#484f58", fontWeight: 400, marginLeft: "6px" }}>(needs initialTileSize &gt; 0)</span>}
 							</div>
 						</div>
 						<RangeControl
@@ -691,24 +709,6 @@ function App() {
 							onChange={(v) => update("feather", v)}
 							min={0} max={50} step={1} suffix="%"
 						/>
-					</div>
-				</div>
-
-				{/* Code example */}
-				<div style={{ marginBottom: "48px" }}>
-					<h3 style={{ fontSize: "16px", fontWeight: 600, color: "#f0f6fc", margin: "0 0 12px" }}>Code</h3>
-					<div style={{ background: "#161b22", border: "1px solid #21262d", borderRadius: "8px", overflow: "hidden" }}>
-						<div style={{ padding: "4px 12px", background: "#1c2128", borderBottom: "1px solid #21262d", fontSize: "12px", color: "#484f58" }}>
-							tsx
-						</div>
-						<pre
-							style={{
-								margin: 0, padding: "16px", fontSize: "13px", lineHeight: 1.6, color: "#c9d1d9", overflowX: "auto",
-								fontFamily: "'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace",
-							}}
-						>
-							<code>{code}</code>
-						</pre>
 					</div>
 				</div>
 

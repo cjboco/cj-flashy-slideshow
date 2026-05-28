@@ -143,7 +143,7 @@ You can use any `wipe*` direction with custom settings:
 | `randomness`    | `number`                  | `50`       | Timing variance percentage when randomize is on (0-100) |
 | `xBlocks`       | `number`                  | varies     | Number of horizontal blocks                          |
 | `yBlocks`       | `number`                  | varies     | Number of vertical blocks                            |
-| `minBlockSize`  | `number`                  | varies     | Minimum block size in pixels during flight           |
+| `initialTileSize`  | `number`                  | varies     | Minimum block size in pixels during flight           |
 | `feather`       | `number`                  | `0`        | Soft edge percentage (0-50) using gradient masks     |
 | `className`     | `string`                  | —          | CSS class for the container                          |
 | `onSlideChange` | `(index: number) => void` | —          | Callback when the active slide changes               |
@@ -155,7 +155,7 @@ Think of each block as a little piece of the next image. During a transition, th
 | Prop            | Type     | Default | Description                                          |
 | --------------- | -------- | ------- | ---------------------------------------------------- |
 | `pathSpeed`     | `number` | `650`   | How fast each block flies in, in milliseconds (100-2500). Lower = faster. |
-| `pathRotation`  | `number` | `0`     | Makes blocks fly in along a curved, spiral-like arc instead of a straight line. The value is degrees of curve — `0` means straight, `360` is one full loop, and higher values create tighter spirals. Requires `minBlockSize` > 0 to be visible. |
+| `pathRotation`  | `number` | `0`     | Makes blocks fly in along a curved, spiral-like arc instead of a straight line. The value is degrees of curve — `0` means straight, `360` is one full loop, and higher values create tighter spirals. Requires `initialTileSize` > 0 to be visible. |
 | `pathBlur`      | `number` | `0`     | Adds a blur effect (in pixels) while the block is flying in. Creates a motion-blur look. |
 
 ### Tile Props — How blocks reveal once they arrive
@@ -165,7 +165,7 @@ Once a block reaches its spot in the grid, it **expands to fill its cell** — l
 | Prop            | Type     | Default | Description                                          |
 | --------------- | -------- | ------- | ---------------------------------------------------- |
 | `tileSpeed`     | `number` | `650`   | How fast each block expands to fill its cell, in milliseconds (100-2500). Lower = faster. |
-| `tileRotation`  | `number` | `0`     | Spins the block as it expands. The value is how many degrees it rotates — `180` is a half turn, `360` is a full spin, `720` is two full spins, etc. Works even when `minBlockSize` is 0. |
+| `tileRotation`  | `number` | `0`     | Spins the block as it expands. The value is how many degrees it rotates — `180` is a half turn, `360` is a full spin, `720` is two full spins, etc. Works even when `initialTileSize` is 0. |
 | `tileBlur`      | `number`  | `0`     | Starts the block blurry and gradually sharpens as it expands. The value is the starting blur in pixels. |
 | `tileExact`     | `boolean` | `false` | When off, tiles grow slightly larger than their cell so they overlap and blend together seamlessly. When on, each tile fits its cell exactly with no overlap — like a clean grid of puzzle pieces. Especially useful with `tileRotation`, where overlapping tiles can look messy. |
 

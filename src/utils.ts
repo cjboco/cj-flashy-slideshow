@@ -90,55 +90,55 @@ export function calculateStartPosition(
 	y: number,
 	blockW: number,
 	blockH: number,
-	minBlockSize: number,
+	initialTileSize: number,
 	w: number,
 	h: number,
 ): { startTop: number; startLeft: number } {
 	switch (direction) {
 		case "top":
 			return {
-				startTop: minBlockSize * -1,
-				startLeft: blockW * x + blockW / 2 - minBlockSize / 2,
+				startTop: initialTileSize * -1,
+				startLeft: blockW * x + blockW / 2 - initialTileSize / 2,
 			};
 		case "topleft":
 			return {
-				startTop: minBlockSize * -1,
-				startLeft: minBlockSize * -1,
+				startTop: initialTileSize * -1,
+				startLeft: initialTileSize * -1,
 			};
 		case "topright":
 			return {
-				startTop: minBlockSize * -1,
-				startLeft: w + minBlockSize,
+				startTop: initialTileSize * -1,
+				startLeft: w + initialTileSize,
 			};
 		case "left":
 			return {
-				startTop: blockH * y + blockH / 2 - minBlockSize / 2,
-				startLeft: minBlockSize * -1,
+				startTop: blockH * y + blockH / 2 - initialTileSize / 2,
+				startLeft: initialTileSize * -1,
 			};
 		case "bottom":
 			return {
-				startTop: h + minBlockSize,
-				startLeft: blockW * x + blockW / 2 - minBlockSize / 2,
+				startTop: h + initialTileSize,
+				startLeft: blockW * x + blockW / 2 - initialTileSize / 2,
 			};
 		case "bottomleft":
 			return {
-				startTop: h + minBlockSize,
-				startLeft: minBlockSize * -1,
+				startTop: h + initialTileSize,
+				startLeft: initialTileSize * -1,
 			};
 		case "bottomright":
 			return {
-				startTop: h + minBlockSize,
-				startLeft: w + minBlockSize,
+				startTop: h + initialTileSize,
+				startLeft: w + initialTileSize,
 			};
 		case "right":
 			return {
-				startTop: blockH * y + blockH / 2 - minBlockSize / 2,
-				startLeft: w + minBlockSize,
+				startTop: blockH * y + blockH / 2 - initialTileSize / 2,
+				startLeft: w + initialTileSize,
 			};
 		default:
 			return {
-				startTop: blockH * y + blockH / 2 - minBlockSize / 2,
-				startLeft: blockW * x + blockW / 2 - minBlockSize / 2,
+				startTop: blockH * y + blockH / 2 - initialTileSize / 2,
+				startLeft: blockW * x + blockW / 2 - initialTileSize / 2,
 			};
 	}
 }
@@ -163,7 +163,7 @@ export function createBlockData(
 		y,
 		blockW,
 		blockH,
-		opts.minBlockSize,
+		opts.initialTileSize,
 		w,
 		h,
 	);
@@ -184,7 +184,7 @@ export function resolveOptions(
 		preset?: string;
 		xBlocks?: number;
 		yBlocks?: number;
-		minBlockSize?: number;
+		initialTileSize?: number;
 		delay?: number;
 		direction?: Direction;
 		style?: "normal" | "rounded";
@@ -206,7 +206,7 @@ export function resolveOptions(
 ): ResolvedOptions {
 	let xBlocks = presetOverrides.xBlocks ?? props.xBlocks ?? 12;
 	let yBlocks = presetOverrides.yBlocks ?? props.yBlocks ?? 3;
-	let minBlockSize = presetOverrides.minBlockSize ?? props.minBlockSize ?? 3;
+	let initialTileSize = presetOverrides.initialTileSize ?? props.initialTileSize ?? 3;
 	const delay = presetOverrides.delay ?? props.delay ?? 3000;
 	const direction = presetOverrides.direction ?? props.direction ?? "left";
 	const style = presetOverrides.style ?? props.style ?? "normal";
@@ -224,17 +224,17 @@ export function resolveOptions(
 
 	xBlocks = typeof xBlocks !== "number" ? 3 : xBlocks < 1 ? 1 : xBlocks;
 	yBlocks = typeof yBlocks !== "number" ? 3 : yBlocks < 1 ? 1 : yBlocks;
-	minBlockSize = typeof minBlockSize !== "number" ? 5 : minBlockSize < 0 ? 0 : minBlockSize;
+	initialTileSize = typeof initialTileSize !== "number" ? 5 : initialTileSize < 0 ? 0 : initialTileSize;
 
-	if (w > h && minBlockSize > w) minBlockSize = w;
-	else if (minBlockSize > h) minBlockSize = h;
+	if (w > h && initialTileSize > w) initialTileSize = w;
+	else if (initialTileSize > h) initialTileSize = h;
 
 	const currentDirection = direction === "random" ? getRandomDirection() : direction;
 
 	return {
 		xBlocks,
 		yBlocks,
-		minBlockSize,
+		initialTileSize,
 		delay: typeof delay !== "number" ? 3000 : delay < 0 ? 0 : delay,
 		direction,
 		currentDirection,
@@ -242,9 +242,9 @@ export function resolveOptions(
 		translucent: typeof translucent !== "boolean" ? false : translucent,
 		randomize: typeof randomize !== "boolean" ? false : randomize,
 		randomness: typeof randomness !== "number" ? 50 : Math.max(0, Math.min(100, randomness)),
-		pathSpeed: minBlockSize === 0 ? 0 : (typeof pathSpeed !== "number" ? 650 : Math.max(100, Math.min(2500, pathSpeed))),
-		pathRotation: minBlockSize === 0 ? 0 : (typeof pathRotation !== "number" ? 0 : pathRotation),
-		pathBlur: minBlockSize === 0 ? 0 : (typeof pathBlur !== "number" ? 0 : Math.max(0, pathBlur)),
+		pathSpeed: initialTileSize === 0 ? 0 : (typeof pathSpeed !== "number" ? 650 : Math.max(100, Math.min(2500, pathSpeed))),
+		pathRotation: initialTileSize === 0 ? 0 : (typeof pathRotation !== "number" ? 0 : pathRotation),
+		pathBlur: initialTileSize === 0 ? 0 : (typeof pathBlur !== "number" ? 0 : Math.max(0, pathBlur)),
 		tileSpeed: typeof tileSpeed !== "number" ? 650 : Math.max(100, Math.min(2500, tileSpeed)),
 		tileRotation: typeof tileRotation !== "number" ? 0 : tileRotation,
 		tileBlur: typeof tileBlur !== "number" ? 0 : Math.max(0, tileBlur),
