@@ -416,6 +416,7 @@ function App() {
 	const code = useMemo(() => buildCodeExample(settings), [settings]);
 	const slideshowKey = JSON.stringify(settings);
 	const activePreset = PRESETS.find((p) => p.value === settings.preset);
+	const pathDisabled = settings.minBlockSize === 0;
 
 	return (
 		<div style={{ minHeight: "100vh", background: "#0f1117", color: "#e1e4e8" }}>
@@ -618,23 +619,27 @@ function App() {
 
 						{/* Path controls */}
 						<div style={{ borderTop: "1px solid #21262d", margin: "2px 0", paddingTop: "8px" }}>
-							<div style={sectionLabelStyle}>Path — how blocks fly in</div>
+							<div style={sectionLabelStyle}>
+								Path — how blocks fly in
+								{pathDisabled && <span style={{ color: "#484f58", fontWeight: 400, marginLeft: "6px" }}>(needs minBlockSize &gt; 0)</span>}
+							</div>
 						</div>
 						<RangeControl
 							label="pathSpeed" value={settings.pathSpeed}
 							onChange={(v) => update("pathSpeed", v)}
 							min={100} max={2500} step={50} suffix="ms"
+							disabled={pathDisabled}
 						/>
 						<OptionalRangeControl
 							label="pathRotation" value={settings.pathRotation}
-							enabled={settings.pathRotationEnabled}
+							enabled={pathDisabled ? false : settings.pathRotationEnabled}
 							onToggle={(on) => toggleOptional("pathRotation", on)}
 							onChange={(v) => update("pathRotation", v)}
 							min={0} max={1080} step={15} suffix="°"
 						/>
 						<OptionalRangeControl
 							label="pathBlur" value={settings.pathBlur}
-							enabled={settings.pathBlurEnabled}
+							enabled={pathDisabled ? false : settings.pathBlurEnabled}
 							onToggle={(on) => toggleOptional("pathBlur", on)}
 							onChange={(v) => update("pathBlur", v)}
 							min={0} max={20} step={0.5} suffix="px"
