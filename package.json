@@ -1,6 +1,6 @@
 {
   "name": "@cjboco/cj-flashy-slideshow",
-  "version": "5.1.0",
+  "version": "5.1.1",
   "description": "A React component that gives your slideshows some flash-like transitions.",
   "type": "module",
   "main": "dist/index.cjs",

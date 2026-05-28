@@ -124,6 +124,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 				initialTileSize: 0,
 				direction: "none",
 				randomize: true,
+				tileExact: true,
 				delay: 2000,
 			};
 		case "wipe":
@@ -161,6 +162,7 @@ export function applyPreset(preset: string, w: number, h: number): Partial<Resol
 				direction: "left",
 				translucent: false,
 				randomize: false,
+				tileExact: true,
 				delay: 3000,
 			};
 	}
