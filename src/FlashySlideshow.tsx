@@ -1,13 +1,31 @@
-import { Children, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+	Children,
+	useCallback,
+	useEffect,
+	useId,
+	useLayoutEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
+import {
+	findMediaSource,
+	GpuRenderer,
+	gpuShape,
+	type MediaSource,
+	mediaReady,
+	TILE_FLOATS,
+	toGpuTile,
+	writeTiles,
+} from "./gpu";
+import { planTile, type Rect, type TilePlan } from "./plan";
 import { applyPreset } from "./presets";
 import type { BlockData, FlashySlideshowProps, ResolvedOptions } from "./types";
 import {
 	calculateStartPosition,
-	calculateWipeStaggerDelay,
 	createBlockData,
 	getRandomDirection,
 	isWipeDirection,
-	randomRange,
 	resolveOptions,
 } from "./utils";
 
@@ -21,8 +39,21 @@ interface AnimState {
 	blockW: number;
 	blockH: number;
 	timer: ReturnType<typeof setTimeout> | null;
+	raf: number;
 	animating: boolean;
 	mounted: boolean;
+}
+
+interface Committed {
+	currentSlide: number;
+	nextSlide: number;
+	showBlocks: boolean;
+	domBlocks: boolean;
+}
+
+interface CommitWaiter {
+	test: (c: Committed) => boolean;
+	run: () => void;
 }
 
 function computeClipInset(
@@ -104,6 +135,11 @@ export function FlashySlideshow({
 	const stateRef = useRef<AnimState | null>(null);
 	const blockRefsRef = useRef<(HTMLDivElement | null)[]>([]);
 	const containerRef = useRef<HTMLDivElement | null>(null);
+	const currentLayerRef = useRef<HTMLDivElement | null>(null);
+	const nextLayerRef = useRef<HTMLDivElement | null>(null);
+	const canvasRef = useRef<HTMLCanvasElement | null>(null);
+	// false once WebGL2 turned out to be unavailable
+	const gpuRef = useRef<GpuRenderer | false | null>(null);
 	const onSlideChangeRef = useRef(onSlideChange);
 	onSlideChangeRef.current = onSlideChange;
 	const scopeId = useId();
@@ -111,6 +147,15 @@ export function FlashySlideshow({
 	const [currentSlide, setCurrentSlide] = useState(0);
 	const [nextSlide, setNextSlide] = useState(1);
 	const [showBlocks, setShowBlocks] = useState(false);
+	// Block divs are only mounted while the DOM renderer is in use
+	const [domBlocks, setDomBlocks] = useState(false);
+	const committedRef = useRef<Committed>({
+		currentSlide: 0,
+		nextSlide: 1,
+		showBlocks: false,
+		domBlocks: false,
+	});
+	const commitWaitersRef = useRef<CommitWaiter[]>([]);
 	const [measuredSize, setMeasuredSize] = useState<{ w: number; h: number } | null>(null);
 
 	const autoSize = widthProp == null || heightProp == null;
@@ -209,17 +254,40 @@ export function FlashySlideshow({
 		return result;
 	}, [opts, blockW, blockH, width, height, wipePad]);
 
+	// Lets the animation effect act right after React commits a state change,
+	// before the browser paints it
+	useLayoutEffect(() => {
+		const committed = { currentSlide, nextSlide, showBlocks, domBlocks };
+		committedRef.current = committed;
+		const waiters = commitWaitersRef.current;
+		if (waiters.length === 0) return;
+		commitWaitersRef.current = waiters.filter((w) => {
+			if (!w.test(committed)) return true;
+			w.run();
+			return false;
+		});
+	});
+
+	useEffect(
+		() => () => {
+			if (gpuRef.current) gpuRef.current.dispose();
+			gpuRef.current = null;
+		},
+		[],
+	);
+
 	// Animation effect
 	useEffect(() => {
 		if (slideCount < 2) return;
 
 		const staggerTimers: ReturnType<typeof setTimeout>[] = [];
-		const isWipe = isWipeDirection(opts.currentDirection);
-		const wipeSpread = opts.pathSpeed * 2;
+		const shape = gpuShape(rounded, feathered);
+		const startSlide =
+			committedRef.current.currentSlide < slideCount ? committedRef.current.currentSlide : 0;
 
 		const state: AnimState = {
-			currentSlide: 0,
-			nextSlide: 1,
+			currentSlide: startSlide,
+			nextSlide: getNextSlideIndex(startSlide),
 			completedBlocks: 0,
 			totalBlocks,
 			blocks,
@@ -227,28 +295,45 @@ export function FlashySlideshow({
 			blockW,
 			blockH,
 			timer: null,
+			raf: 0,
 			animating: false,
 			mounted: true,
 		};
 		stateRef.current = state;
+		setCurrentSlide(startSlide);
+		setNextSlide(state.nextSlide);
+
+		function whenCommitted(test: (c: Committed) => boolean, run: () => void) {
+			commitWaitersRef.current.push({ test, run: () => state.mounted && run() });
+		}
 
 		function getBlockEls(): HTMLDivElement[] {
 			return blockRefsRef.current.filter((el): el is HTMLDivElement => el !== null);
 		}
 
-		function resetBlocks() {
-			const nextIdx = getNextSlideIndex(state.currentSlide);
-			state.nextSlide = nextIdx;
+		function region(r: Rect) {
+			return getRegionProps(r.y, r.x, r.w, r.h, width, height, rounded, feathered);
+		}
 
-			const blockEls = getBlockEls();
+		function scheduleNext() {
+			state.timer = setTimeout(() => {
+				if (state.mounted) void runTransition();
+			}, opts.delay);
+		}
 
-			for (let i = 0; i < blocks.length; i++) {
-				const b = blocks[i];
+		function finishTransition() {
+			state.currentSlide = state.nextSlide;
+			state.nextSlide = getNextSlideIndex(state.currentSlide);
+			state.animating = false;
+			onSlideChangeRef.current?.(state.currentSlide);
+			scheduleNext();
+		}
 
+		function planTransition(): TilePlan[] {
+			return blocks.map((b) => {
 				if (opts.direction === "random") {
-					const dir = getRandomDirection();
 					const pos = calculateStartPosition(
-						dir,
+						getRandomDirection(),
 						b.x,
 						b.y,
 						blockW,
@@ -260,293 +345,233 @@ export function FlashySlideshow({
 					b.startTop = pos.startTop;
 					b.startLeft = pos.startLeft;
 				}
-
-				const el = blockEls[i];
-				if (!el) continue;
-
-				const initSize = isWipe ? 0 : opts.initialTileSize;
-				applyRegionStyle(el, getRegionProps(
-					b.startTop, b.startLeft, initSize, initSize,
-					width, height, rounded, feathered,
-				));
-				el.style.opacity = isWipe ? "0" : String(b.opacity);
-				el.style.filter = opts.pathBlur > 0 ? `blur(${opts.pathBlur}px)` : "";
-			}
-
-			setNextSlide(nextIdx);
+				return planTile(b, opts, blockW, blockH, rounded, feathered);
+			});
 		}
 
-		function animateBlocks() {
-			if (!state.mounted) return;
+		async function runTransition() {
 			for (const t of staggerTimers) clearTimeout(t);
 			staggerTimers.length = 0;
 			state.completedBlocks = 0;
 			state.animating = true;
 
-			// Reset block positions while still hidden
-			resetBlocks();
-
-			setNextSlide(state.nextSlide);
-			setShowBlocks(true);
-
-			// Wait a frame so React renders the block content
-			requestAnimationFrame(() => {
-				if (!state.mounted) return;
-
-				const blockEls = getBlockEls();
-
-				function animateBlock(i: number) {
-					const b = blocks[i];
-					const el = blockEls[i];
-					if (!el || !state.mounted) return;
-
-					if (isWipe) {
-						el.style.opacity = String(b.opacity);
-					}
-
-					const mbs = opts.initialTileSize;
-
-					const midCenterX =
-						blockW * b.x +
-						blockW / 2 -
-						mbs / 2 +
-						(opts.randomize ? randomRange(0, mbs) - mbs / 2 : 0);
-					const midCenterY =
-						blockH * b.y +
-						blockH / 2 -
-						mbs / 2 +
-						(opts.randomize ? randomRange(0, mbs) - mbs / 2 : 0);
-
-					const pathVariance = opts.randomize ? opts.pathSpeed * opts.randomness / 100 : 0;
-					const tileVariance = opts.randomize ? opts.tileSpeed * opts.randomness / 100 : 0;
-					const phase1Duration = opts.randomize
-						? randomRange(Math.max(50, opts.pathSpeed - pathVariance), opts.pathSpeed + pathVariance)
-						: opts.pathSpeed;
-					const phase2Duration = opts.randomize
-						? randomRange(Math.max(50, opts.tileSpeed - tileVariance), opts.tileSpeed + tileVariance)
-						: opts.tileSpeed;
-
-					const midProps = getRegionProps(
-						midCenterY, midCenterX, mbs, mbs,
-						width, height, rounded, feathered,
-					);
-
-					// Build phase 1 keyframes — spiral path via pathRotation
-					const blockPathRotation = opts.randomize && opts.pathRotation !== 0
-						? opts.pathRotation + randomRange(-180, 180)
-						: opts.pathRotation;
-
-					const phase1Keyframes: Keyframe[] = [];
-
-					const pathBlurVal = opts.pathBlur > 0 ? `blur(${opts.pathBlur}px)` : undefined;
-
-					if (blockPathRotation === 0) {
-						// Straight path
-						const startProps = getRegionProps(
-							b.startTop, b.startLeft, mbs, mbs,
-							width, height, rounded, feathered,
-						);
-						phase1Keyframes.push(
-							{ ...startProps, ...(pathBlurVal && { filter: pathBlurVal }) },
-							{ ...midProps, ...(pathBlurVal && { filter: pathBlurVal }) },
-						);
-					} else {
-						// Spiral arc path from start to center
-						const startCX = b.startLeft + mbs / 2;
-						const startCY = b.startTop + mbs / 2;
-						const midCX = midCenterX + mbs / 2;
-						const midCY = midCenterY + mbs / 2;
-						const dx = startCX - midCX;
-						const dy = startCY - midCY;
-						const startAngle = Math.atan2(dy, dx);
-						const startRadius = Math.sqrt(dx * dx + dy * dy);
-						const rotRad = (blockPathRotation * Math.PI) / 180;
-						const steps = Math.max(8, Math.ceil(Math.abs(blockPathRotation) / 30));
-
-						for (let k = 0; k <= steps; k++) {
-							const t = k / steps;
-							const angle = startAngle + rotRad * t;
-							const radius = startRadius * (1 - t);
-							const cx = midCX + Math.cos(angle) * radius;
-							const cy = midCY + Math.sin(angle) * radius;
-							const clipX = cx - mbs / 2;
-							const clipY = cy - mbs / 2;
-							phase1Keyframes.push({
-								...getRegionProps(clipY, clipX, mbs, mbs, width, height, rounded, feathered),
-								...(pathBlurVal && { filter: pathBlurVal }),
-							});
-						}
-					}
-
-					// Phase 1: move from start position to grid center
-					const phase1 = el.animate(
-						phase1Keyframes,
-						{ duration: phase1Duration, easing: "linear", fill: "forwards" },
-					);
-
-					phase1.onfinish = () => {
-						if (!state.mounted) return;
-
-						// Phase 2: expand from small at center to full cell
-						let expandTop: number, expandLeft: number, expandW: number, expandH: number;
-						if (opts.tileExact) {
-							expandTop = blockH * b.y;
-							expandLeft = blockW * b.x;
-							expandW = blockW;
-							expandH = blockH;
-						} else if (rounded) {
-							const cx = blockW * b.x + blockW / 2;
-							const cy = blockH * b.y + blockH / 2;
-							const bigR = Math.ceil(Math.hypot(blockW, blockH));
-							expandTop = cy - bigR;
-							expandLeft = cx - bigR;
-							expandW = bigR * 2;
-							expandH = bigR * 2;
-						} else {
-							expandTop = b.endTop;
-							expandLeft = b.endLeft;
-							expandW = blockW * 2;
-							expandH = blockH * 2;
-						}
-
-						const expandedProps = getRegionProps(
-							expandTop, expandLeft, expandW, expandH,
-							width, height, rounded, feathered,
-						);
-
-						// When feathered, inflate the final mask so soft edges
-						// get pushed outside the visible area
-						let finalProps: Record<string, string>;
-						if (feathered) {
-							const inflate = opts.feather / 100;
-							const padW = expandW * inflate;
-							const padH = expandH * inflate;
-							finalProps = getRegionProps(
-								expandTop - padH, expandLeft - padW,
-								expandW + padW * 2, expandH + padH * 2,
-								width, height, rounded, true,
-							);
-						} else {
-							finalProps = expandedProps;
-						}
-
-						const tileBlurVal = opts.tileBlur > 0 ? `blur(${opts.tileBlur}px)` : undefined;
-						const blockTileRotation = opts.randomize && opts.tileRotation !== 0
-							? opts.tileRotation + randomRange(-180, 180)
-							: opts.tileRotation;
-
-						// Set transform-origin to the tile's cell center so rotation
-						// spins around the tile, not the full-size container center.
-						const tileCX = blockW * b.x + blockW / 2;
-						const tileCY = blockH * b.y + blockH / 2;
-						const tileOrigin = blockTileRotation !== 0
-							? { transformOrigin: `${tileCX}px ${tileCY}px` }
-							: {};
-						const tileRotStart = blockTileRotation !== 0
-							? { transform: `rotate(${blockTileRotation}deg)`, ...tileOrigin }
-							: {};
-						const tileRotEnd = blockTileRotation !== 0
-							? { transform: "rotate(0deg)", ...tileOrigin }
-							: {};
-
-						const phase2Keyframes: Keyframe[] = feathered
-							? [
-								{
-									...midProps,
-									opacity: String(b.opacity),
-									...tileRotStart,
-									...(tileBlurVal && { filter: tileBlurVal }),
-									offset: 0,
-								},
-								{
-									...expandedProps,
-									opacity: "1",
-									...tileRotEnd,
-									...(tileBlurVal && { filter: "blur(0px)" }),
-									offset: 0.75,
-								},
-								{
-									...finalProps,
-									opacity: "1",
-									...tileRotEnd,
-									...(tileBlurVal && { filter: "blur(0px)" }),
-									offset: 1.0,
-								},
-							]
-							: [
-								{
-									...midProps,
-									opacity: String(b.opacity),
-									...tileRotStart,
-									...(tileBlurVal && { filter: tileBlurVal }),
-								},
-								{
-									...expandedProps,
-									opacity: "1",
-									...tileRotEnd,
-									...(tileBlurVal && { filter: "blur(0px)" }),
-								},
-							];
-
-						const phase2 = el.animate(
-							phase2Keyframes,
-							{ duration: phase2Duration, fill: "forwards" },
-						);
-
-						phase2.onfinish = () => {
-							if (!state.mounted) return;
-
-							applyRegionStyle(el, finalProps);
-							el.style.opacity = "1";
-							el.style.filter = "";
-							el.style.transform = "";
-							phase1.cancel();
-							phase2.cancel();
-
-							state.completedBlocks++;
-
-							if (state.completedBlocks === state.totalBlocks) {
-								const nextIdx = state.nextSlide;
-								state.currentSlide = nextIdx;
-								setCurrentSlide(nextIdx);
-								setShowBlocks(false);
-
-								onSlideChangeRef.current?.(state.currentSlide);
-
-								state.timer = setTimeout(() => {
-									if (state.mounted) animateBlocks();
-								}, opts.delay);
-							}
-						};
-					};
-				}
-
-				for (let i = 0; i < blocks.length; i++) {
-					if (isWipe) {
-						const b = blocks[i];
-						const staggerDelay = calculateWipeStaggerDelay(
-							b.x, b.y, opts.xBlocks, opts.yBlocks,
-							opts.currentDirection, wipeSpread,
-						);
-						const timer = setTimeout(() => animateBlock(i), staggerDelay);
-						staggerTimers.push(timer);
-					} else {
-						animateBlock(i);
-					}
-				}
-			});
+			const plans = planTransition();
+			const gpu = await prepareGpu();
+			if (!state.mounted) return;
+			if (gpu) runGpu(gpu.renderer, gpu.media, plans);
+			else runDom(plans);
 		}
 
-		// Initialize
-		state.timer = setTimeout(() => {
-			if (state.mounted) animateBlocks();
-		}, opts.delay);
+		// Returns a renderer loaded with the next slide, or null when the slide
+		// has to go through the DOM renderer
+		async function prepareGpu(): Promise<{ renderer: GpuRenderer; media: MediaSource } | null> {
+			if (gpuRef.current === false) return null;
+			if (committedRef.current.nextSlide !== state.nextSlide) return null;
+			const layer = nextLayerRef.current;
+			const canvas = canvasRef.current;
+			if (!layer || !canvas) return null;
+
+			const media = findMediaSource(layer);
+			if (!media || !(await mediaReady(media)) || !state.mounted) return null;
+
+			let renderer = gpuRef.current;
+			if (!renderer || renderer.canvas !== canvas) {
+				renderer?.dispose();
+				renderer = GpuRenderer.create(canvas);
+				gpuRef.current = renderer ?? false;
+			}
+			if (!renderer || renderer.lost) return null;
+
+			renderer.resize(width, height, window.devicePixelRatio || 1);
+			if (!renderer.setSource(media)) return null;
+			return { renderer, media };
+		}
+
+		function runGpu(renderer: GpuRenderer, media: MediaSource, plans: TilePlan[]) {
+			const tiles = plans.map((p) => toGpuTile(p, shape, width, height));
+			const data = new Float32Array(tiles.length * TILE_FLOATS);
+			const isVideo = media instanceof HTMLVideoElement;
+			let start = -1;
+
+			const frame = (now: number) => {
+				if (!state.mounted) return;
+				if (start < 0) start = now;
+				const done = writeTiles(data, tiles, now - start, opts, shape);
+				if (isVideo) renderer.upload(media);
+				renderer.draw(data, tiles.length, shape, opts.feather / 100);
+				if (!done) {
+					state.raf = requestAnimationFrame(frame);
+					return;
+				}
+
+				// The canvas holds the finished frame until the bottom layer can show
+				// the same slide, then gets cleared
+				const nextIdx = state.nextSlide;
+				setCurrentSlide(nextIdx);
+				setNextSlide(getNextSlideIndex(nextIdx));
+				setDomBlocks(false);
+				whenCommitted(
+					(c) => c.currentSlide === nextIdx,
+					() => {
+						const img = currentLayerRef.current?.querySelector("img");
+						const decoded = img ? img.decode().catch(() => {}) : Promise.resolve();
+						void decoded.then(() => {
+							if (!state.mounted) return;
+							state.raf = requestAnimationFrame(() => {
+								if (!state.mounted) return;
+								renderer.clear();
+								finishTransition();
+							});
+						});
+					},
+				);
+			};
+			state.raf = requestAnimationFrame(frame);
+		}
+
+		function runDom(plans: TilePlan[]) {
+			const nextIdx = state.nextSlide;
+			setNextSlide(nextIdx);
+			setDomBlocks(true);
+			setShowBlocks(true);
+
+			whenCommitted(
+				(c) => c.showBlocks && c.domBlocks && c.nextSlide === nextIdx,
+				() => {
+					// Runs before paint, so the blocks never show their previous end state
+					const blockEls = getBlockEls();
+					for (let i = 0; i < plans.length; i++) {
+						const el = blockEls[i];
+						if (!el) continue;
+						applyRegionStyle(el, region(plans[i].initial));
+						el.style.opacity = String(plans[i].initialOpacity);
+						el.style.filter = opts.pathBlur > 0 ? `blur(${opts.pathBlur}px)` : "";
+					}
+
+					requestAnimationFrame(() => {
+						if (!state.mounted) return;
+						for (let i = 0; i < plans.length; i++) {
+							const el = blockEls[i];
+							if (!el) continue;
+							const p = plans[i];
+							if (p.delay > 0) {
+								staggerTimers.push(setTimeout(() => animateDomBlock(el, p), p.delay));
+							} else {
+								animateDomBlock(el, p);
+							}
+						}
+					});
+				},
+			);
+		}
+
+		function animateDomBlock(el: HTMLDivElement, p: TilePlan) {
+			if (!state.mounted) return;
+			el.style.opacity = String(p.opacity);
+
+			const pathBlurVal = opts.pathBlur > 0 ? `blur(${opts.pathBlur}px)` : undefined;
+
+			// Phase 1: move from start position to grid center
+			const phase1 = el.animate(
+				p.path.map((r) => ({ ...region(r), ...(pathBlurVal && { filter: pathBlurVal }) })),
+				{ duration: p.phase1Duration, easing: "linear", fill: "forwards" },
+			);
+
+			phase1.onfinish = () => {
+				if (!state.mounted) return;
+
+				// Phase 2: expand from small at center to full cell
+				const midProps = region(p.mid);
+				const expandedProps = region(p.expanded);
+				const finalProps = region(p.final);
+
+				const tileBlurVal = opts.tileBlur > 0 ? `blur(${opts.tileBlur}px)` : undefined;
+
+				// Set transform-origin to the tile's cell center so rotation
+				// spins around the tile, not the full-size container center.
+				const tileOrigin =
+					p.tileRotation !== 0 ? { transformOrigin: `${p.originX}px ${p.originY}px` } : {};
+				const tileRotStart =
+					p.tileRotation !== 0
+						? { transform: `rotate(${p.tileRotation}deg)`, ...tileOrigin }
+						: {};
+				const tileRotEnd =
+					p.tileRotation !== 0 ? { transform: "rotate(0deg)", ...tileOrigin } : {};
+
+				const phase2Keyframes: Keyframe[] = feathered
+					? [
+							{
+								...midProps,
+								opacity: String(p.opacity),
+								...tileRotStart,
+								...(tileBlurVal && { filter: tileBlurVal }),
+								offset: 0,
+							},
+							{
+								...expandedProps,
+								opacity: "1",
+								...tileRotEnd,
+								...(tileBlurVal && { filter: "blur(0px)" }),
+								offset: 0.75,
+							},
+							{
+								...finalProps,
+								opacity: "1",
+								...tileRotEnd,
+								...(tileBlurVal && { filter: "blur(0px)" }),
+								offset: 1.0,
+							},
+						]
+					: [
+							{
+								...midProps,
+								opacity: String(p.opacity),
+								...tileRotStart,
+								...(tileBlurVal && { filter: tileBlurVal }),
+							},
+							{
+								...expandedProps,
+								opacity: "1",
+								...tileRotEnd,
+								...(tileBlurVal && { filter: "blur(0px)" }),
+							},
+						];
+
+				const phase2 = el.animate(phase2Keyframes, { duration: p.phase2Duration, fill: "forwards" });
+
+				phase2.onfinish = () => {
+					if (!state.mounted) return;
+
+					applyRegionStyle(el, finalProps);
+					el.style.opacity = "1";
+					el.style.filter = "";
+					el.style.transform = "";
+					phase1.cancel();
+					phase2.cancel();
+
+					state.completedBlocks++;
+
+					if (state.completedBlocks === state.totalBlocks) {
+						const nextIdx = state.nextSlide;
+						setCurrentSlide(nextIdx);
+						setNextSlide(getNextSlideIndex(nextIdx));
+						setShowBlocks(false);
+						finishTransition();
+					}
+				};
+			};
+		}
+
+		scheduleNext();
 
 		return () => {
 			state.mounted = false;
 			if (state.timer) clearTimeout(state.timer);
+			cancelAnimationFrame(state.raf);
 			for (const t of staggerTimers) clearTimeout(t);
 			staggerTimers.length = 0;
+			commitWaitersRef.current = [];
+			if (gpuRef.current) gpuRef.current.clear();
 
 			const blockEls = getBlockEls();
 			for (const el of blockEls) {
@@ -581,39 +606,39 @@ export function FlashySlideshow({
 		...(heightProp != null ? { height: `${heightProp}px` } : { height: "100%" }),
 	};
 
+	const layerStyle: React.CSSProperties = {
+		position: "absolute",
+		top: 0,
+		left: 0,
+		width: `${width}px`,
+		height: `${height}px`,
+		overflow: "hidden",
+	};
+
 	return (
-		<div
-			ref={containerRef}
-			className={className}
-			data-flashy={scopeId}
-			style={containerStyle}
-		>
+		<div ref={containerRef} className={className} data-flashy={scopeId} style={containerStyle}>
 			<style>{fitStyle}</style>
 			{hasSize && (
 				<>
+					{/* Hidden copy of the next slide: the GPU renderer's texture source */}
+					{slideCount > 1 && (
+						<div
+							ref={nextLayerRef}
+							aria-hidden="true"
+							style={{ ...layerStyle, zIndex: 0, visibility: "hidden" }}
+						>
+							{slides[nextSlide]}
+						</div>
+					)}
+
 					{/* Bottom layer: current slide */}
-					<div
-						style={{
-							position: "absolute",
-							top: 0,
-							left: 0,
-							width: `${width}px`,
-							height: `${height}px`,
-							zIndex: 1,
-							overflow: "hidden",
-						}}
-					>
+					<div ref={currentLayerRef} style={{ ...layerStyle, zIndex: 1 }}>
 						{slides[currentSlide]}
 					</div>
 
-					{/* Block layer: each block is a full-size div clipped to its grid cell */}
-					{blocks.map((b, i) => (
-						<div
-							key={`${b.x}-${b.y}`}
-							ref={(el) => {
-								blockRefsRef.current[i] = el;
-							}}
-							className="cj-flashy-block"
+					{slideCount > 1 && (
+						<canvas
+							ref={canvasRef}
 							style={{
 								position: "absolute",
 								top: 0,
@@ -621,15 +646,31 @@ export function FlashySlideshow({
 								width: `${width}px`,
 								height: `${height}px`,
 								zIndex: 2,
-								overflow: "hidden",
 								pointerEvents: "none",
-								visibility: showBlocks ? "visible" : "hidden",
-								...maskGradientStyle,
 							}}
-						>
-							{slides[nextSlide]}
-						</div>
-					))}
+						/>
+					)}
+
+					{/* DOM fallback: each block is a full-size div clipped to its grid cell */}
+					{domBlocks &&
+						blocks.map((b, i) => (
+							<div
+								key={`${b.x}-${b.y}`}
+								ref={(el) => {
+									blockRefsRef.current[i] = el;
+								}}
+								className="cj-flashy-block"
+								style={{
+									...layerStyle,
+									zIndex: 2,
+									pointerEvents: "none",
+									visibility: showBlocks ? "visible" : "hidden",
+									...maskGradientStyle,
+								}}
+							>
+								{slides[nextSlide]}
+							</div>
+						))}
 				</>
 			)}
 		</div>
